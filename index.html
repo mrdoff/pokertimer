@@ -57,6 +57,21 @@
             color: #d1d5db; /* Gray-300 */
             line-height: 1.4;
         }
+        /* Styling for alarm toggle button */
+        .alarm-toggle-btn {
+            background-color: #4b5563; /* gray-600 */
+            color: #d1d5db; /* gray-300 */
+        }
+        .alarm-toggle-btn.active {
+            background-color: #10b981; /* green-500 */
+            color: #ffffff;
+        }
+        .alarm-toggle-btn:hover {
+            background-color: #6b7280; /* gray-500 */
+        }
+        .alarm-toggle-btn.active:hover {
+            background-color: #059669; /* green-600 */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
@@ -84,6 +99,23 @@
                 <p class="text-gray-400">Inga aktiva timers just nu.</p>
             </div>
         </main>
+        
+        <!-- New Alarms Section -->
+        <section class="w-full max-w-2xl mx-auto mt-8">
+            <h2 class="text-3xl font-bold text-blue-400 text-center mb-4">Mina Larm</h2>
+            <div class="flex justify-center mb-6">
+                <button id="add-alarm-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
+                    <i class="fas fa-bell"></i>
+                    <span>Lägg till nytt larm</span>
+                </button>
+            </div>
+            <div id="alarms-container" class="space-y-4">
+                <div id="no-alarms-message" class="text-center bg-gray-800 p-8 rounded-lg">
+                    <i class="fas fa-bell-slash fa-3x text-gray-500 mb-4"></i>
+                    <p class="text-gray-400">Inga aktiva larm just nu.</p>
+                </div>
+            </div>
+        </section>
         
         <!-- Removed the footer section with the "Buy me a coffee" link -->
     </div>
@@ -145,6 +177,29 @@
         </div>
     </div>
     
+    <!-- New Alarm Modal -->
+    <div id="add-alarm-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-white">Ställ in nytt larm</h2>
+            <form id="add-alarm-form">
+                <div class="mb-4">
+                    <label for="alarm-time-input" class="block text-gray-400 text-sm font-bold mb-2">
+                        Larmtid (t.ex. 14:30, 08:00)
+                    </label>
+                    <input type="text" id="alarm-time-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="t.ex. 14:30" required>
+                </div>
+                <div class="mb-6">
+                    <label for="alarm-label-input" class="block text-gray-400 text-sm font-bold mb-2">Etikett (valfritt)</label>
+                    <input type="text" id="alarm-label-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="Blinds upp!">
+                </div>
+                <div class="flex items-center justify-end space-x-4">
+                    <button type="button" id="cancel-add-alarm-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Avbryt</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Spara larm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Removed the QR code modal entirely -->
     
     <template id="timer-card-template">
@@ -162,6 +217,24 @@
         </div>
     </template>
 
+    <!-- New Alarm Card Template -->
+    <template id="alarm-card-template">
+        <div class="alarm-card bg-gray-800 rounded-lg shadow-lg p-6 flex items-center justify-between transition-all duration-300">
+            <div class="flex-grow">
+                <p class="alarm-label font-bold text-xl text-white truncate"></p>
+                <p class="alarm-time font-mono text-4xl tracking-widest text-green-400"></p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="alarm-toggle-btn w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110">
+                    <i class="fas fa-toggle-on text-green-500 text-3xl"></i>
+                </button>
+                <button class="remove-alarm-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Selectors ---
@@ -170,15 +243,11 @@
             const settingsBtn = document.getElementById('settings-btn');
             const addTimerModal = document.getElementById('add-timer-modal');
             const settingsModal = document.getElementById('settings-modal');
-            // const qrCodeModal = document.getElementById('qr-code-modal'); // Removed
             const addTimerForm = document.getElementById('add-timer-form');
-            const settingsForm = document.getElementById('settings-form');
             const timeInput = document.getElementById('time-input');
             const labelInput = document.getElementById('label-input');
             const cancelAddBtn = document.getElementById('cancel-add-btn');
             const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
-            // const buyMeACoffeeLink = document.getElementById('buy-me-a-coffee'); // Removed
-            // const closeQrBtn = document.getElementById('close-qr-btn'); // Removed
             const timerCardTemplate = document.getElementById('timer-card-template');
             const noTimersMessage = document.getElementById('no-timers-message');
             const alarmSoundSelect = document.getElementById('alarm-sound-select');
@@ -187,10 +256,23 @@
             const timeInputHelpIcon = document.getElementById('time-input-help-icon');
             const timeInputHelpText = document.getElementById('time-input-help-text');
 
+            // --- Alarm Selectors ---
+            const alarmsContainer = document.getElementById('alarms-container');
+            const addAlarmBtn = document.getElementById('add-alarm-btn');
+            const addAlarmModal = document.getElementById('add-alarm-modal');
+            const addAlarmForm = document.getElementById('add-alarm-form');
+            const alarmTimeInput = document.getElementById('alarm-time-input');
+            const alarmLabelInput = document.getElementById('alarm-label-input');
+            const cancelAddAlarmBtn = document.getElementById('cancel-add-alarm-btn');
+            const alarmCardTemplate = document.getElementById('alarm-card-template');
+            const noAlarmsMessage = document.getElementById('no-alarms-message');
+
 
             // --- State ---
             let timers = [];
+            let alarms = []; // Array to store alarm objects
             let mainInterval;
+            let alarmCheckInterval; // Interval for checking alarms
             const settings = {
                 sound: 'Alarm 1',
                 notificationsEnabled: true
@@ -204,11 +286,11 @@
 
             // --- Logic ---
             const saveSettings = () => {
-                localStorage.setItem('easyTimerSettings', JSON.stringify(settings));
+                localStorage.setItem('pokerTimerSettings', JSON.stringify(settings)); // Changed key
             };
 
             const loadSettings = () => {
-                const saved = localStorage.getItem('easyTimerSettings');
+                const saved = localStorage.getItem('pokerTimerSettings'); // Changed key
                 if (saved) {
                     Object.assign(settings, JSON.parse(saved));
                 }
@@ -401,7 +483,7 @@
 
                 playSound();
                 if(settings.notificationsEnabled) {
-                    showNotification(timer.label);
+                    showNotification('PokerTimer - Tiden är ute!', `Din timer "${timer.label}" är klar.`);
                 }
 
                 setTimeout(() => stopTimer(id), 5000);
@@ -423,11 +505,12 @@
                 }
             };
             
-            const showNotification = (label) => {
+            // Modified showNotification to accept title and body
+            const showNotification = (title, body) => {
                  if (Notification.permission === 'granted') {
-                     const notification = new Notification('PokerTimer - Tiden är ute!', {
-                         body: `Din timer "${label}" är klar.`,
-                         icon: 'https://img.icons8.com/plasticine/100/000000/timer.png'
+                     const notification = new Notification(title, {
+                         body: body,
+                         icon: 'https://img.icons8.com/plasticine/100/000000/timer.png' // Generic icon, could be bell for alarms
                      });
                  }
             };
@@ -450,7 +533,7 @@
             };
             
             const requestNotificationPermission = () => {
-                localStorage.setItem('easyTimerPermissionAsked', 'true');
+                localStorage.setItem('pokerTimerPermissionAsked', 'true'); // Changed key
                 Notification.requestPermission().then(permission => {
                     if(permission === 'granted') {
                        settings.notificationsEnabled = true;
@@ -460,73 +543,316 @@
                 });
             };
 
-            // --- Event Listeners ---
-            addTimerBtn.addEventListener('click', () => {
-                addTimerModal.classList.remove('hidden');
-                timeInput.focus();
-            });
-            cancelAddBtn.addEventListener('click', () => addTimerModal.classList.add('hidden'));
+            // --- Alarm Logic ---
+            const saveAlarms = () => {
+                // Store only necessary data, not UI elements
+                const simplifiedAlarms = alarms.map(alarm => ({
+                    id: alarm.id,
+                    time: alarm.time.toISOString(), // Store Date as ISO string
+                    label: alarm.label,
+                    active: alarm.active,
+                    nextTriggerTime: alarm.nextTriggerTime ? alarm.nextTriggerTime.toISOString() : null // Store next trigger time
+                }));
+                localStorage.setItem('pokerTimerAlarms', JSON.stringify(simplifiedAlarms));
+            };
 
-            settingsBtn.addEventListener('click', () => {
-                settingsModal.classList.remove('hidden');
-            });
-            cancelSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-            
-            addTimerForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const totalSeconds = parseTimeInput(timeInput.value);
-                if (totalSeconds) {
-                    addNewTimer(totalSeconds, labelInput.value);
-                    addTimerForm.reset();
-                    addTimerModal.classList.add('hidden');
+            const loadAlarms = () => {
+                const savedAlarms = localStorage.getItem('pokerTimerAlarms');
+                if (savedAlarms) {
+                    const loaded = JSON.parse(savedAlarms);
+                    alarms = loaded.map(alarmData => {
+                        const alarm = {
+                            id: alarmData.id,
+                            time: new Date(alarmData.time), // Convert ISO string back to Date
+                            label: alarmData.label,
+                            active: alarmData.active,
+                            nextTriggerTime: alarmData.nextTriggerTime ? new Date(alarmData.nextTriggerTime) : null,
+                            ui: {} // UI elements will be re-created
+                        };
+                        createAlarmCard(alarm); // Recreate UI for each loaded alarm
+                        return alarm;
+                    });
+                    updateNoAlarmsMessage();
+                    startAlarmCheckInterval();
+                }
+            };
+
+            const parseAlarmTimeInput = (str) => {
+                str = str.trim();
+                if (!str) return null;
+
+                // Regex to match HH:MM or HH:MM:SS (optional seconds)
+                const timeRegex = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
+                const match = str.match(timeRegex);
+
+                if (match) {
+                    const hours = parseInt(match[1], 10);
+                    const minutes = parseInt(match[2], 10);
+                    const seconds = match[3] ? parseInt(match[3], 10) : 0;
+
+                    if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60 && seconds >= 0 && seconds < 60) {
+                        const now = new Date();
+                        let alarmDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
+
+                        // If the alarm time has already passed today, set it for tomorrow
+                        if (alarmDate.getTime() <= now.getTime()) {
+                            alarmDate.setDate(alarmDate.getDate() + 1);
+                        }
+                        return alarmDate;
+                    }
+                }
+                return null; // Invalid format
+            };
+
+            const formatAlarmTime = (date) => {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${hours}:${minutes}`;
+            };
+
+            const createAlarmCard = (alarm) => {
+                const card = alarmCardTemplate.content.cloneNode(true).firstElementChild;
+                card.dataset.id = alarm.id;
+
+                const labelEl = card.querySelector('.alarm-label');
+                const timeEl = card.querySelector('.alarm-time');
+                const toggleBtn = card.querySelector('.alarm-toggle-btn');
+                const removeBtn = card.querySelector('.remove-alarm-btn');
+
+                labelEl.textContent = alarm.label;
+                timeEl.textContent = formatAlarmTime(alarm.time);
+
+                // Initialize toggle button state
+                updateAlarmToggleButton(toggleBtn, alarm.active);
+                if (!alarm.active) {
+                    card.classList.add('opacity-50'); // Dim inactive alarms
+                }
+
+                toggleBtn.addEventListener('click', () => toggleAlarm(alarm.id));
+                removeBtn.addEventListener('click', () => removeAlarm(alarm.id));
+
+                alarmsContainer.appendChild(card);
+
+                alarm.ui = { card, labelEl, timeEl, toggleBtn, removeBtn };
+            };
+
+            const addNewAlarm = (alarmTime, label) => {
+                const id = Date.now();
+                const newAlarm = {
+                    id,
+                    time: alarmTime, // This is a Date object (next occurrence)
+                    label: label || `Larm #${alarms.length + 1}`,
+                    active: true,
+                    nextTriggerTime: alarmTime // Initial trigger time
+                };
+                alarms.push(newAlarm);
+                createAlarmCard(newAlarm);
+                saveAlarms();
+                updateNoAlarmsMessage();
+                startAlarmCheckInterval();
+            };
+
+            const toggleAlarm = (id) => {
+                const alarm = alarms.find(a => a.id === id);
+                if (alarm) {
+                    alarm.active = !alarm.active;
+                    updateAlarmToggleButton(alarm.ui.toggleBtn, alarm.active);
+                    if (alarm.active) {
+                        alarm.ui.card.classList.remove('opacity-50');
+                        // Recalculate next trigger time if activated
+                        const now = new Date();
+                        let nextTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), alarm.time.getHours(), alarm.time.getMinutes(), alarm.time.getSeconds());
+                        if (nextTime.getTime() <= now.getTime()) {
+                            nextTime.setDate(nextTime.getDate() + 1);
+                        }
+                        alarm.nextTriggerTime = nextTime;
+                    } else {
+                        alarm.ui.card.classList.add('opacity-50');
+                        alarm.nextTriggerTime = null; // No next trigger if inactive
+                    }
+                    saveAlarms();
+                }
+            };
+
+            const updateAlarmToggleButton = (button, isActive) => {
+                button.classList.remove('bg-green-600', 'bg-gray-600', 'hover:bg-green-700', 'hover:bg-gray-500');
+                button.innerHTML = '';
+                if (isActive) {
+                    button.classList.add('bg-green-600', 'hover:bg-green-700');
+                    button.innerHTML = '<i class="fas fa-toggle-on text-white text-3xl"></i>';
                 } else {
-                    // Replaced alert() with a console log and visual highlight for better UX
-                    console.error('Ogiltigt tidsformat. Försök med t.ex. "20", "20.14", ":45", "1 timme 30 minuter", "2h", "45m", "10s", "01:30:15".');
-                    timeInput.classList.add('border-red-500', 'ring-red-500'); // Highlight error
-                    setTimeout(() => {
-                        timeInput.classList.remove('border-red-500', 'ring-red-500');
-                    }, 2000);
+                    button.classList.add('bg-gray-600', 'hover:bg-gray-500');
+                    button.innerHTML = '<i class="fas fa-toggle-off text-gray-300 text-3xl"></i>';
+                }
+            };
+
+            const removeAlarm = (id) => {
+                const alarmIndex = alarms.findIndex(a => a.id === id);
+                if (alarmIndex > -1) {
+                    alarms[alarmIndex].ui.card.remove();
+                    alarms.splice(alarmIndex, 1);
+                    saveAlarms();
+                    updateNoAlarmsMessage();
+                    if (alarms.length === 0) {
+                        stopAlarmCheckInterval();
+                    }
+                }
+            };
+
+            const updateNoAlarmsMessage = () => {
+                if (alarms.length === 0) {
+                    noAlarmsMessage.classList.remove('hidden');
+                } else {
+                    noAlarmsMessage.classList.add('hidden');
+                }
+            };
+
+            const startAlarmCheckInterval = () => {
+                if (alarmCheckInterval) return;
+                alarmCheckInterval = setInterval(checkAlarms, 1000); // Check every second
+            };
+
+            const stopAlarmCheckInterval = () => {
+                clearInterval(alarmCheckInterval);
+                alarmCheckInterval = null;
+            };
+
+            const checkAlarms = () => {
+                const now = new Date();
+                alarms.forEach(alarm => {
+                    if (alarm.active && alarm.nextTriggerTime) {
+                        // Check if current time is past or at the next trigger time
+                        // Using a small buffer (e.g., 500ms) to account for interval timing
+                        if (now.getTime() >= alarm.nextTriggerTime.getTime() - 500) {
+                            // Trigger alarm!
+                            console.log(`Alarm triggered: ${alarm.label} at ${formatAlarmTime(alarm.time)}`);
+                            playSound();
+                            if (settings.notificationsEnabled) {
+                                showNotification(`PokerTimer - Larm!`, `Det är dags för ditt larm: "${alarm.label}" (${formatAlarmTime(alarm.time)})`);
+                            }
+
+                            // Set next trigger time for tomorrow
+                            alarm.nextTriggerTime.setDate(alarm.nextTriggerTime.getDate() + 1);
+                            saveAlarms(); // Save updated nextTriggerTime
+                            
+                            // Optional: Briefly highlight the alarm card when it triggers
+                            alarm.ui.card.classList.add('border-green-500', 'border-4');
+                            setTimeout(() => {
+                                alarm.ui.card.classList.remove('border-green-500', 'border-4');
+                            }, 3000);
+                        }
+                    }
+                });
+            };
+
+            // --- Event Listeners ---
+            if (addTimerBtn) {
+                addTimerBtn.addEventListener('click', () => {
+                    addTimerModal.classList.remove('hidden');
                     timeInput.focus();
-                }
-            });
+                });
+            } else { console.error("Error: addTimerBtn element not found."); }
 
-            settingsForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                settings.sound = alarmSoundSelect.value;
-                settings.notificationsEnabled = notificationsToggle.checked;
-                saveSettings();
-                settingsModal.classList.add('hidden');
+            if (cancelAddBtn) {
+                cancelAddBtn.addEventListener('click', () => addTimerModal.classList.add('hidden'));
+            } else { console.error("Error: cancelAddBtn element not found."); }
 
-                if (settings.notificationsEnabled && Notification.permission !== 'granted') {
-                    requestNotificationPermission();
-                }
-            });
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', () => {
+                    settingsModal.classList.remove('hidden');
+                });
+            } else { console.error("Error: settingsBtn element not found."); }
 
-            notificationsToggle.addEventListener('change', () => {
-                if (notificationsToggle.checked && Notification.permission === 'default') {
-                    requestNotificationPermission();
-                }
-            });
+            if (cancelSettingsBtn) {
+                cancelSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+            } else { console.error("Error: cancelSettingsBtn element not found."); }
+            
+            if (addTimerForm) {
+                addTimerForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const totalSeconds = parseTimeInput(timeInput.value);
+                    if (totalSeconds) {
+                        addNewTimer(totalSeconds, labelInput.value);
+                        addTimerForm.reset();
+                        addTimerModal.classList.add('hidden');
+                    } else {
+                        console.error('Ogiltigt tidsformat. Försök med t.ex. "20", "20.14", ":45", "1 timme 30 minuter", "2h", "45m", "10s", "01:30:15".');
+                        timeInput.classList.add('border-red-500', 'ring-red-500'); // Highlight error
+                        setTimeout(() => {
+                            timeInput.classList.remove('border-red-500', 'ring-red-500');
+                        }, 2000);
+                        timeInput.focus();
+                    }
+                });
+            } else { console.error("Error: addTimerForm element not found."); }
 
-            // Removed event listeners for buyMeACoffeeLink and closeQrBtn
-            // buyMeACoffeeLink.addEventListener('click', (e) => {
-            //     e.preventDefault();
-            //     qrCodeModal.classList.remove('hidden');
-            // });
+            if (settingsForm) {
+                settingsForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    settings.sound = alarmSoundSelect.value;
+                    settings.notificationsEnabled = notificationsToggle.checked;
+                    saveSettings();
+                    settingsModal.classList.add('hidden');
 
-            // closeQrBtn.addEventListener('click', () => {
-            //     qrCodeModal.classList.add('hidden');
-            // });
+                    if (settings.notificationsEnabled && Notification.permission !== 'granted') {
+                        requestNotificationPermission();
+                    }
+                });
+            } else { console.error("Error: settingsForm element not found."); }
+
+            if (notificationsToggle) {
+                notificationsToggle.addEventListener('change', () => {
+                    if (notificationsToggle.checked && Notification.permission === 'default') {
+                        requestNotificationPermission();
+                    }
+                });
+            } else { console.error("Error: notificationsToggle element not found."); }
 
             // Event listener for the help icon
-            timeInputHelpIcon.addEventListener('click', () => {
-                timeInputHelpText.classList.toggle('hidden');
-            });
+            if (timeInputHelpIcon) {
+                timeInputHelpIcon.addEventListener('click', () => {
+                    if (timeInputHelpText) {
+                        timeInputHelpText.classList.toggle('hidden');
+                    } else { console.error("Error: timeInputHelpText element not found."); }
+                });
+            } else { console.error("Error: timeInputHelpIcon element not found."); }
+
+            // --- Alarm Event Listeners ---
+            if (addAlarmBtn) {
+                addAlarmBtn.addEventListener('click', () => {
+                    addAlarmModal.classList.remove('hidden');
+                    alarmTimeInput.focus();
+                });
+            } else { console.error("Error: addAlarmBtn element not found."); }
+
+            if (cancelAddAlarmBtn) {
+                cancelAddAlarmBtn.addEventListener('click', () => addAlarmModal.classList.add('hidden'));
+            } else { console.error("Error: cancelAddAlarmBtn element not found."); }
+
+            if (addAlarmForm) {
+                addAlarmForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const alarmTime = parseAlarmTimeInput(alarmTimeInput.value);
+                    if (alarmTime) {
+                        addNewAlarm(alarmTime, alarmLabelInput.value);
+                        addAlarmForm.reset();
+                        addAlarmModal.classList.add('hidden');
+                    } else {
+                        console.error('Ogiltigt tidsformat för larm. Använd format som HH:MM (t.ex. 14:30).');
+                        alarmTimeInput.classList.add('border-red-500', 'ring-red-500');
+                        setTimeout(() => {
+                            alarmTimeInput.classList.remove('border-red-500', 'ring-red-500');
+                        }, 2000);
+                        alarmTimeInput.focus();
+                    }
+                });
+            } else { console.error("Error: addAlarmForm element not found."); }
 
             // --- Init ---
             loadSettings();
+            loadAlarms(); // Load alarms on startup
             
-            const permissionAsked = localStorage.getItem('easyTimerPermissionAsked');
+            const permissionAsked = localStorage.getItem('pokerTimerPermissionAsked'); // Changed key
             if (!permissionAsked && Notification.permission === 'default') {
                 setTimeout(requestNotificationPermission, 1500);
             }
