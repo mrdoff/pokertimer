@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="sv" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyTimer Webbapp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .timer-card {
+            position: relative; /* Nödvändig för progressbarens positionering */
+            overflow: hidden; /* Gömmer progressbaren som går utanför kortet */
+            /* Bakgrundsfärgen tas bort härifrån för att progressbaren ska synas */
+        }
+        .timer-card.done {
+            animation: pulse-bg 1.5s infinite;
+        }
+        .timer-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #1e3a8a; /* En mörkare blå färg, nu synlig som bakgrund */
+            z-index: 0;
+            transition: width 0.25s linear; /* Mjuk övergång för bredden */
+        }
+        /* Se till att innehållet ligger ovanpå progressbaren */
+        .timer-card > div {
+            position: relative;
+            z-index: 1;
+        }
+        @keyframes pulse-bg {
+            0% { background-color: #1e40af; } /* blue-800 */
+            50% { background-color: #2563eb; } /* blue-600 */
+            100% { background-color: #1e40af; } /* blue-800 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl font-bold text-blue-400">EasyTimer</h1>
+            <p class="text-gray-400 mt-2">Dina timers, synkade i molnet. Lägg till en timer för att börja.</p>
+        </header>
+
+        <div class="flex justify-center space-x-4 mb-8">
+            <button id="add-timer-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
+                <i class="fas fa-plus-circle"></i>
+                <span>Lägg till ny timer</span>
+            </button>
+            <button id="settings-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
+                <i class="fas fa-cog"></i>
+                <span>Inställningar</span>
+            </button>
+        </div>
+
+        <main id="timers-container" class="space-y-4">
+            <div id="no-timers-message" class="text-center bg-gray-800 p-8 rounded-lg">
+                <i class="fas fa-clock fa-3x text-gray-500 mb-4"></i>
+                <p class="text-gray-400">Inga aktiva timers just nu.</p>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-12">
+            <a href="#" id="buy-me-a-coffee" class="text-blue-400 hover:text-blue-300 transition">Gillar du appen? Bjud mig på en kaffe! ☕</a>
+        </footer>
+    </div>
+
+    <div id="add-timer-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-white">Ställ in ny timer</h2>
+            <form id="add-timer-form">
+                <div class="mb-4">
+                    <label for="time-input" class="block text-gray-400 text-sm font-bold mb-2">Tid (t.ex. 20, 20.14, :45)</label>
+                    <input type="text" id="time-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="20.30" required>
+                </div>
+                <div class="mb-6">
+                    <label for="label-input" class="block text-gray-400 text-sm font-bold mb-2">Etikett (valfritt)</label>
+                    <input type="text" id="label-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="Koka pasta">
+                </div>
+                <div class="flex items-center justify-end space-x-4">
+                    <button type="button" id="cancel-add-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Avbryt</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Starta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-white">Inställningar</h2>
+            <form id="settings-form">
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Larmljud</label>
+                    <select id="alarm-sound-select" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600">
+                        <option value="Alarm 1">Alarm 1 (Digital)</option>
+                        <option value="Alarm 2">Alarm 2 (Mjuk)</option>
+                        <option value="Alarm 3">Alarm 3 (Klocka)</option>
+                    </select>
+                </div>
+                <div class="mb-6 flex items-center">
+                    <input type="checkbox" id="notifications-toggle" class="h-5 w-5 rounded bg-gray-700 border-gray-500 text-blue-500 focus:ring-blue-500 cursor-pointer">
+                    <label for="notifications-toggle" class="ml-3 text-gray-300 cursor-pointer">Visa webbläsaraviseringar</label>
+                </div>
+                <div id="notification-permission-status" class="text-sm text-gray-500 mb-6 hidden"></div>
+
+                <div class="flex items-center justify-end space-x-4">
+                     <button type="button" id="cancel-settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Stäng</button>
+                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Spara</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="qr-code-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg p-6 relative">
+            <button id="close-qr-btn" class="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl">&times;</button>
+            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGIwVFBQXERQaFhQZLyAnHhQUHx4mJykqKawpLD/2wBDAQYFBQUGCgYHCw4JCQ4RDQ4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg7/wAARCAE3ATcDASIAAhEBAxEB/8QAGwABAAMAAwEAAAAAAAAAAAAAAAMEBQIGAQf/xAAzEAACAgEDAgMECgIDAAAAAAAAAQIDBBESITEFBhNBURQiMmFxFSNCoRYkQ1JigbHR/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwAAARECEQA/APx4AAADoABqAAACAA0ACgAIBAAoAgACgAgCgCAAKAKAAgACgAAAAIAAAAAAAAgACiAAAAAKIAoAAAAigAAAAAKAIAACqABQAFAAQAFAAQAFgUABAFABAFABYFAAQBRAAAAAEAUAAAAAAAAAABQEAURQBAFAAAAEUAAAQBRAFAVAAAAQAFAAQAFAABYFAAQAFAAEAUABQAEAUAAAAAAAgACgAIAoAAAAAgAAAAAAAoAgCiAKACAKAIoAAACiKAAACAKAKgAAACAKAAoACAKAAgCgAKAAgCgAAAAAAIAAoAgACgCAAKAAgCgAAAAAAACiKAIoAACiKAAAgCiKAAAACAKAAqgAAAAIAoACgAIAoACgAIAoAAAAAAAgACgCAAKAKAAgCgAAAAAAAKAIoAigAAAAIoAAACiKAIoAAAAAAKgAAAAAIAoACgAIAoACgAIAoAAAAAAAgACgCAAKAKAAgCgAAAAAAAACgCKAIoAAACAKAAoigAAIAoigAAAAAAAqAAAAACAKAAoAigAKAAoACgCAAAAAAKAIoAigAKAIoAAAAAigAAAAAAAKAIoAigAAAIoAAACiKAIoAAAAAAAAKgAAAAAIAoACgCKAAoACgAIAoAAAAACgCKAIoACgCKAAoAgAAAAAAAACiKAIoAAACAKAAoigAAAIoAAAAAAAAAAAAKgAAAAAIAoACgCAAKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAAAAigAAAAAAAACiKAIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACiKAAAgCiKAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgCAKAAAAAAAoAAAAigCAAKAIoAAACiKAAAAAAAACgCAKIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCAAKAAoACgCAAAAAAKAAAAoAigCAAKAIoAAACiKAAAAAAAACgCAKIoAAACiKAAAgCiKAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKIoAAACiKAAAgCiKAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgCAKAAAAAAgCgAAAKAIAoAigAKAIoAAACiKAAAAAAAACgCAKIoAAACAKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCAKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCAKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKIoAAACAKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACiKAAAigCiKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACAKIoAAACAKIoAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKAIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKAIoAAACAKIoAAACiKAAAAAAAAAAAAAD/9k=" alt="QR Code" class="max-w-xs w-full">
+        </div>
+    </div>
+    
+    <template id="timer-card-template">
+        <div class="timer-card rounded-lg shadow-lg p-6 transition-all duration-300">
+            <div class="timer-progress"></div>
+            <div class="flex items-center justify-between">
+                <div class="flex-grow">
+                    <p class="timer-label font-bold text-xl text-white truncate"></p>
+                    <p class="timer-time font-mono text-5xl tracking-widest text-blue-400"></p>
+                </div>
+                <button class="stop-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110">
+                    <i class="fas fa-stop"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Selectors ---
+            const timersContainer = document.getElementById('timers-container');
+            const addTimerBtn = document.getElementById('add-timer-btn');
+            const settingsBtn = document.getElementById('settings-btn');
+            const addTimerModal = document.getElementById('add-timer-modal');
+            const settingsModal = document.getElementById('settings-modal');
+            const qrCodeModal = document.getElementById('qr-code-modal');
+            const addTimerForm = document.getElementById('add-timer-form');
+            const settingsForm = document.getElementById('settings-form');
+            const timeInput = document.getElementById('time-input');
+            const labelInput = document.getElementById('label-input');
+            const cancelAddBtn = document.getElementById('cancel-add-btn');
+            const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
+            const buyMeACoffeeLink = document.getElementById('buy-me-a-coffee');
+            const closeQrBtn = document.getElementById('close-qr-btn');
+            const timerCardTemplate = document.getElementById('timer-card-template');
+            const noTimersMessage = document.getElementById('no-timers-message');
+            const alarmSoundSelect = document.getElementById('alarm-sound-select');
+            const notificationsToggle = document.getElementById('notifications-toggle');
+            const notificationStatus = document.getElementById('notification-permission-status');
+
+            // --- State ---
+            let timers = [];
+            let mainInterval;
+            const settings = {
+                sound: 'Alarm 1',
+                notificationsEnabled: true
+            };
+
+            const sounds = {
+                'Alarm 1': () => new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 } }).toDestination(),
+                'Alarm 2': () => new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.1, decay: 0.5, sustain: 0.1, release: 1 } }).toDestination(),
+                'Alarm 3': () => new Tone.MembraneSynth().toDestination()
+            };
+
+            // --- Logic ---
+            const saveSettings = () => {
+                localStorage.setItem('easyTimerSettings', JSON.stringify(settings));
+            };
+
+            const loadSettings = () => {
+                const saved = localStorage.getItem('easyTimerSettings');
+                if (saved) {
+                    Object.assign(settings, JSON.parse(saved));
+                }
+                alarmSoundSelect.value = settings.sound;
+                notificationsToggle.checked = settings.notificationsEnabled;
+                updateNotificationPermissionStatus();
+            };
+
+            const parseTimeInput = (str) => {
+                str = str.trim();
+                if (!str) return null;
+
+                try {
+                    if (str.includes('.') || str.includes(':')) {
+                        const separator = str.includes('.') ? '.' : ':';
+                        const parts = str.split(separator);
+
+                        if (parts.length === 2) {
+                            const minutes = parts[0] ? parseInt(parts[0], 10) : 0;
+                            const seconds = parts[1] ? parseInt(parts[1], 10) : 0;
+
+                            if (isNaN(minutes) || isNaN(seconds) || minutes < 0 || seconds < 0 || seconds >= 60) {
+                                return null;
+                            }
+                            const totalSeconds = (minutes * 60) + seconds;
+                            return totalSeconds > 0 ? totalSeconds : null;
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        const minutes = parseInt(str, 10);
+                        if (isNaN(minutes) || minutes <= 0) return null;
+                        return minutes * 60;
+                    }
+                } catch (e) {
+                    return null;
+                }
+            };
+            
+            const formatTime = (totalSeconds) => {
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            };
+            
+            const startMainInterval = () => {
+                if(mainInterval) return;
+                mainInterval = setInterval(updateAllTimers, 250);
+            };
+
+            const stopMainInterval = () => {
+                if (timers.length === 0) {
+                    clearInterval(mainInterval);
+                    mainInterval = null;
+                }
+            };
+
+            const updateAllTimers = () => {
+                if (timers.length === 0) {
+                    stopMainInterval();
+                    return;
+                }
+
+                timers.sort((a, b) => a.endTime - b.endTime);
+                
+                timers.forEach(timer => timersContainer.appendChild(timer.ui.card));
+
+                timers.forEach(timer => {
+                    if (timer.finished) return; 
+                    const now = Date.now();
+                    const remainingMs = timer.endTime - now;
+                    const remainingSeconds = Math.round(remainingMs / 1000);
+                    
+                    // Uppdatera progressbaren
+                    const elapsed = timer.totalSeconds * 1000 - remainingMs;
+                    const progressPercentage = Math.max(0, 100 - (elapsed / (timer.totalSeconds * 1000)) * 100);
+                    timer.ui.progressEl.style.width = `${progressPercentage}%`;
+
+                    if (remainingSeconds <= 0) {
+                        timer.ui.timeEl.textContent = "00:00";
+                        finishTimer(timer.id);
+                    } else {
+                        timer.ui.timeEl.textContent = formatTime(remainingSeconds);
+                    }
+                });
+            };
+            
+            const addNewTimer = (totalSeconds, label) => {
+                const id = Date.now();
+                const startTime = Date.now();
+                const endTime = startTime + totalSeconds * 1000;
+
+                const card = timerCardTemplate.content.cloneNode(true).firstElementChild;
+                card.dataset.id = id;
+
+                const labelEl = card.querySelector('.timer-label');
+                const timeEl = card.querySelector('.timer-time');
+                const stopBtn = card.querySelector('.stop-btn');
+                const progressEl = card.querySelector('.timer-progress'); // Hämta progress-elementet
+                
+                const timerLabel = label || `Timer #${Math.floor(Math.random() * 1000)}`;
+                labelEl.textContent = timerLabel;
+                timeEl.textContent = formatTime(totalSeconds);
+                stopBtn.addEventListener('click', () => stopTimer(id));
+                
+                // Sätt progressbarens bredd till 100% initialt
+                progressEl.style.width = '100%'; 
+
+                if (noTimersMessage) noTimersMessage.classList.add('hidden');
+                timersContainer.appendChild(card);
+
+                const newTimer = {
+                    id,
+                    endTime,
+                    label: timerLabel,
+                    totalSeconds,
+                    finished: false,
+                    ui: { card, labelEl, timeEl, stopBtn, progressEl } // Spara progressEl
+                };
+
+                timers.push(newTimer);
+                startMainInterval();
+            };
+
+            const stopTimer = (id) => {
+                const timerIndex = timers.findIndex(t => t.id === id);
+                if (timerIndex > -1) {
+                    timers[timerIndex].ui.card.remove();
+                    timers.splice(timerIndex, 1);
+                }
+                if (timers.length === 0 && noTimersMessage) {
+                    noTimersMessage.classList.remove('hidden');
+                }
+                stopMainInterval();
+            };
+            
+            const finishTimer = (id) => {
+                const timer = timers.find(t => t.id === id);
+                if (!timer || timer.finished) return;
+
+                timer.finished = true;
+                timer.ui.card.classList.add('done');
+                timer.ui.labelEl.textContent = `${timer.label} - Klart!`;
+                timer.ui.stopBtn.innerHTML = '<i class="fas fa-check"></i>';
+                timer.ui.stopBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                timer.ui.stopBtn.classList.add('bg-green-600', 'cursor-not-allowed');
+                timer.ui.stopBtn.disabled = true;
+                timer.ui.progressEl.style.width = '0%'; // Sätt progress till 0% vid avslut
+
+                playSound();
+                if(settings.notificationsEnabled) {
+                    showNotification(timer.label);
+                }
+
+                setTimeout(() => stopTimer(id), 5000);
+            };
+            
+            const playSound = () => {
+                const synth = sounds[settings.sound] ? sounds[settings.sound]() : sounds['Alarm 1']();
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+
+                if (settings.sound === 'Alarm 1') {
+                    synth.triggerAttackRelease('C5', '8n', Tone.now());
+                    synth.triggerAttackRelease('C5', '8n', Tone.now() + 0.2);
+                } else if (settings.sound === 'Alarm 2') {
+                    synth.triggerAttackRelease('E4', '4n');
+                } else { // Alarm 3
+                    synth.triggerAttackRelease('C2', '8n');
+                }
+            };
+            
+            const showNotification = (label) => {
+                 if (Notification.permission === 'granted') {
+                     const notification = new Notification('EasyTimer - Tiden är ute!', {
+                         body: `Din timer "${label}" är klar.`,
+                         icon: 'https://img.icons8.com/plasticine/100/000000/timer.png'
+                     });
+                 }
+            };
+            
+            const updateNotificationPermissionStatus = () => {
+                notificationStatus.classList.remove('hidden');
+                if (Notification.permission === 'granted') {
+                    notificationStatus.textContent = 'Aviseringar är tillåtna.';
+                    notificationStatus.className = 'text-sm text-green-500 mb-6';
+                    notificationsToggle.checked = settings.notificationsEnabled;
+                } else if (Notification.permission === 'denied') {
+                    notificationStatus.textContent = 'Aviseringar är blockerade i din webbläsare.';
+                    notificationStatus.className = 'text-sm text-red-500 mb-6';
+                    notificationsToggle.checked = false;
+                    notificationsToggle.disabled = true;
+                } else {
+                     notificationStatus.textContent = 'Aviseringar har inte begärts ännu.';
+                     notificationStatus.className = 'text-sm text-yellow-500 mb-6';
+                }
+            };
+            
+            const requestNotificationPermission = () => {
+                localStorage.setItem('easyTimerPermissionAsked', 'true');
+                Notification.requestPermission().then(permission => {
+                    if(permission === 'granted') {
+                       settings.notificationsEnabled = true;
+                       saveSettings();
+                    }
+                    updateNotificationPermissionStatus();
+                });
+            };
+
+            // --- Event Listeners ---
+            addTimerBtn.addEventListener('click', () => {
+                addTimerModal.classList.remove('hidden');
+                timeInput.focus();
+            });
+            cancelAddBtn.addEventListener('click', () => addTimerModal.classList.add('hidden'));
+
+            settingsBtn.addEventListener('click', () => {
+                settingsModal.classList.remove('hidden');
+            });
+            cancelSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+            
+            addTimerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const totalSeconds = parseTimeInput(timeInput.value);
+                if (totalSeconds) {
+                    addNewTimer(totalSeconds, labelInput.value);
+                    addTimerForm.reset();
+                    addTimerModal.classList.add('hidden');
+                } else {
+                    // Replaced alert() with a custom message box or modal for better UX
+                    // For this example, I'll just log to console and highlight the input
+                    console.error('Ogiltigt tidsformat. Försök med t.ex. 20, 20.14 eller :45.');
+                    timeInput.classList.add('border-red-500', 'ring-red-500'); // Highlight error
+                    setTimeout(() => {
+                        timeInput.classList.remove('border-red-500', 'ring-red-500');
+                    }, 2000);
+                    timeInput.focus();
+                }
+            });
+
+            settingsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                settings.sound = alarmSoundSelect.value;
+                settings.notificationsEnabled = notificationsToggle.checked;
+                saveSettings();
+                settingsModal.classList.add('hidden');
+
+                if (settings.notificationsEnabled && Notification.permission !== 'granted') {
+                    requestNotificationPermission();
+                }
+            });
+
+            notificationsToggle.addEventListener('change', () => {
+                if (notificationsToggle.checked && Notification.permission === 'default') {
+                    requestNotificationPermission();
+                }
+            });
+
+            buyMeACoffeeLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                qrCodeModal.classList.remove('hidden');
+            });
+
+            closeQrBtn.addEventListener('click', () => {
+                qrCodeModal.classList.add('hidden');
+            });
+
+            // --- Init ---
+            loadSettings();
+            
+            const permissionAsked = localStorage.getItem('easyTimerPermissionAsked');
+            if (!permissionAsked && Notification.permission === 'default') {
+                setTimeout(requestNotificationPermission, 1500);
+            }
+
+        });
+    </script>
+</body>
+</html>
