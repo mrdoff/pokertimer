@@ -16,19 +16,22 @@
             position: relative; /* Necessary for progress bar positioning */
             overflow: hidden; /* Hides the progress bar that goes outside the card */
             /* Background color removed from here so the progress bar is visible */
-        }
+        
+}
         .timer-card.done {
             animation: pulse-bg 1.5s infinite;
         }
         .timer-progress {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background-color: #1e3a8a; /* A darker blue color, now visible as background */
-            z-index: 0;
-            transition: width 0.25s linear; /* Smooth transition for width */
-        }
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 8px;
+    background-color: #3b82f6;
+    z-index: 1;
+    transition: width 0.25s linear;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
         /* Ensure content is on top of the progress bar */
         .timer-card > div {
             position: relative;
@@ -102,7 +105,7 @@
         
         <!-- New Alarms Section -->
         <section class="w-full max-w-2xl mx-auto mt-8">
-            <h2 class="text-3xl font-bold text-blue-400 text-center mb-4">PokerLarm</h2>
+            <h2 class="text-3xl font-bold text-blue-400 text-center mb-4">Mina Larm</h2>
             <div class="flex justify-center mb-6">
                 <button id="add-alarm-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
                     <i class="fas fa-bell"></i>
@@ -248,7 +251,7 @@
             const labelInput = document.getElementById('label-input');
             const cancelAddBtn = document.getElementById('cancel-add-btn');
             const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
-	    const settingsForm = document.getElementById('settings-form');
+            const settingsForm = document.getElementById('settings-form');
             const timerCardTemplate = document.getElementById('timer-card-template');
             const noTimersMessage = document.getElementById('no-timers-message');
             const alarmSoundSelect = document.getElementById('alarm-sound-select');
