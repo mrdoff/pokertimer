@@ -13,9 +13,9 @@
             -webkit-tap-highlight-color: transparent;
         }
         .timer-card {
-            position: relative; /* Nödvändig för progressbarens positionering */
-            overflow: hidden; /* Gömmer progressbaren som går utanför kortet */
-            /* Bakgrundsfärgen tas bort härifrån för att progressbaren ska synas */
+            position: relative; /* Necessary for progress bar positioning */
+            overflow: hidden; /* Hides the progress bar that goes outside the card */
+            /* Background color removed from here so the progress bar is visible */
         }
         .timer-card.done {
             animation: pulse-bg 1.5s infinite;
@@ -25,11 +25,11 @@
             top: 0;
             left: 0;
             height: 100%;
-            background-color: #1e3a8a; /* En mörkare blå färg, nu synlig som bakgrund */
+            background-color: #1e3a8a; /* A darker blue color, now visible as background */
             z-index: 0;
-            transition: width 0.25s linear; /* Mjuk övergång för bredden */
+            transition: width 0.25s linear; /* Smooth transition for width */
         }
-        /* Se till att innehållet ligger ovanpå progressbaren */
+        /* Ensure content is on top of the progress bar */
         .timer-card > div {
             position: relative;
             z-index: 1;
@@ -38,6 +38,24 @@
             0% { background-color: #1e40af; } /* blue-800 */
             50% { background-color: #2563eb; } /* blue-600 */
             100% { background-color: #1e40af; } /* blue-800 */
+        }
+        .help-icon {
+            cursor: pointer;
+            margin-left: 0.5rem; /* Space between label and icon */
+            color: #9ca3af; /* Gray-400 */
+            transition: color 0.2s ease-in-out;
+        }
+        .help-icon:hover {
+            color: #d1d5db; /* Gray-300 */
+        }
+        .help-text-box {
+            background-color: #374151; /* Gray-700 */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+            color: #d1d5db; /* Gray-300 */
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -67,22 +85,31 @@
             </div>
         </main>
         
-        <footer class="text-center mt-12">
-            <a href="#" id="buy-me-a-coffee" class="text-blue-400 hover:text-blue-300 transition">Gillar du appen? Bjud mig på en kaffe! ☕</a>
-        </footer>
+        <!-- Removed the footer section with the "Buy me a coffee" link -->
     </div>
 
-    <div id="add-timer-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+    <div id="add-timer-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
             <h2 class="text-2xl font-bold mb-6 text-white">Ställ in ny timer</h2>
             <form id="add-timer-form">
                 <div class="mb-4">
-                    <label for="time-input" class="block text-gray-400 text-sm font-bold mb-2">Tid (t.ex. 20, 20.14, :45)</label>
-                    <input type="text" id="time-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="20.30" required>
+                    <label for="time-input" class="block text-gray-400 text-sm font-bold mb-2">
+                        Tid
+                        <i id="time-input-help-icon" class="fas fa-question-circle help-icon"></i>
+                    </label>
+                    <input type="text" id="time-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="t.ex. 20, 20.14, 1h 30m, 01:30:15" required>
+                    <div id="time-input-help-text" class="help-text-box hidden">
+                        Ange tid i minuter (t.ex. "20" för 20 minuter). Du kan också använda:
+                        <ul>
+                            <li>Minuter och sekunder: "20.14" eller "20:14"</li>
+                            <li>Timmar, minuter, sekunder med bokstäver: "1h 30m", "45m 10s", "2h", "30s"</li>
+                            <li>Timmar, minuter, sekunder med kolon: "01:30:15" för 1 timme, 30 minuter och 15 sekunder</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="mb-6">
                     <label for="label-input" class="block text-gray-400 text-sm font-bold mb-2">Etikett (valfritt)</label>
-                    <input type="text" id="label-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="Koka pasta">
+                    <input type="text" id="label-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="Mystery Bounty på iPoker">
                 </div>
                 <div class="flex items-center justify-end space-x-4">
                     <button type="button" id="cancel-add-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Avbryt</button>
@@ -92,7 +119,7 @@
         </div>
     </div>
     
-    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
             <h2 class="text-2xl font-bold mb-6 text-white">Inställningar</h2>
             <form id="settings-form">
@@ -118,12 +145,7 @@
         </div>
     </div>
     
-    <div id="qr-code-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-lg p-6 relative">
-            <button id="close-qr-btn" class="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl">&times;</button>
-            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGIwVFBQXERQaFhQZLyAnHhQUHx4mJykqKawpLD/2wBDAQYFBQUGCgYHCw4JCQ4RDQ4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg7/wAARCAE3ATcDASIAAhEBAxEB/8QAGwABAAMAAwEAAAAAAAAAAAAAAAMEBQIGAQf/xAAzEAACAgEDAgMECgIDAAAAAAAAAQIDBBESITEFBhNBURQiMmFxFSNCoRYkQ1JigbHR/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwAAARECEQA/APx4AAADoABqAAACAA0ACgAIBAAoAgACgAgCgCAAKAKAAgACgAAAAIAAAAAAAAgACiAAAAAKIAoAAAAigAAAAAKAIAACqABQAFAAQAFAAQAFgUABAFABAFABYFAAQBRAAAAAEAUAAAAAAAAAABQEAURQBAFAAAAEUAAAQBRAFAVAAAAQAFAAQAFAABYFAAQAFAAEAUABQAEAUAAAAAAAgACgAIAoAAAAAgAAAAAAAoAgCiAKACAKAIoAAACiKAAACAKAKgAAACAKAAoACAKAAgCgAKAAgCgAAAAAAIAAoAgACgCAAKAAgCgAAAAAAACiKAIoAACiKAAAgCiKAAAACAKAAqgAAAAIAoACgAIAoACgAIAoAAAAAAAgACgCAAKAKAAgCgAAAAAAAKAIoAigAAAAIoAAACiKAIoAAAAAAKgAAAAAIAoACgAIAoACgAIAoAAAAAAAgACgCAAKAKAAgCgAAAAAAAACgCKAIoAAACAKAAoigAAIAoigAAAAAAAqAAAAACAKAAoAigAKAAoACgCAAAAAAKAIoAigAKAIoAAAAAigAAAAAAAKAIoAigAAAIoAAACiKAIoAAAAAAAAKgAAAAAIAoACgCKAAoACgAIAoAAAAACgCKAIoACgCKAAoAgAAAAAAAACiKAIoAAACAKAAoigAAAIoAAAAAAAAAAAAKgAAAAAIAoACgCAAKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAAAAigAAAAAAAACiKAIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACiKAAAgCiKAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgCAKAAAAAAAoAAAAigCAAKAIoAAACiKAAAAAAAACgCAKIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCAAKAAoACgCAAAAAAKAAAAoAigCAAKAIoAAACiKAAAAAAAACgCAKIoAAACiKAAAgCiKAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKIoAAACiKAAAgCiKAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgCAKAAAAAAgCgAAAKAIAoAigAKAIoAAACiKAAAAAAAACgCAKIoAAACAKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCAKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCAKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKIoAAACAKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACiKAAAigCiKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCAKIoAAACAKIoAAACAKIoAAAAAAAAAAAAACoAAAAAIAoACgAIAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKAIoAAACCKAIoAAACAKAAAAAAAAAAAAACoAAAAAIAoACgCKAAoACgAIAoAAAAACgAAAAKAIoAgCgAKAIoAAACiKAAAAAAAACgCKAIoAAACAKIoAAACiKAAAAAAAAAAAAAD/9k=" alt="QR Code" class="max-w-xs w-full">
-        </div>
-    </div>
+    <!-- Removed the QR code modal entirely -->
     
     <template id="timer-card-template">
         <div class="timer-card rounded-lg shadow-lg p-6 transition-all duration-300">
@@ -148,20 +170,23 @@
             const settingsBtn = document.getElementById('settings-btn');
             const addTimerModal = document.getElementById('add-timer-modal');
             const settingsModal = document.getElementById('settings-modal');
-            const qrCodeModal = document.getElementById('qr-code-modal');
+            // const qrCodeModal = document.getElementById('qr-code-modal'); // Removed
             const addTimerForm = document.getElementById('add-timer-form');
             const settingsForm = document.getElementById('settings-form');
             const timeInput = document.getElementById('time-input');
             const labelInput = document.getElementById('label-input');
             const cancelAddBtn = document.getElementById('cancel-add-btn');
             const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
-            const buyMeACoffeeLink = document.getElementById('buy-me-a-coffee');
-            const closeQrBtn = document.getElementById('close-qr-btn');
+            // const buyMeACoffeeLink = document.getElementById('buy-me-a-coffee'); // Removed
+            // const closeQrBtn = document.getElementById('close-qr-btn'); // Removed
             const timerCardTemplate = document.getElementById('timer-card-template');
             const noTimersMessage = document.getElementById('no-timers-message');
             const alarmSoundSelect = document.getElementById('alarm-sound-select');
             const notificationsToggle = document.getElementById('notifications-toggle');
             const notificationStatus = document.getElementById('notification-permission-status');
+            const timeInputHelpIcon = document.getElementById('time-input-help-icon');
+            const timeInputHelpText = document.getElementById('time-input-help-text');
+
 
             // --- State ---
             let timers = [];
@@ -193,9 +218,49 @@
             };
 
             const parseTimeInput = (str) => {
-                str = str.trim();
+                str = str.trim().toLowerCase(); // Normalize input
                 if (!str) return null;
 
+                let totalSeconds = 0;
+                let parsedWithKeywords = false;
+
+                // Try to parse formats like "1 timme 30 minuter", "2h", "45m", "10s"
+                const hourMatch = str.match(/(\d+)\s*(timme|timmar|h)/);
+                const minuteMatch = str.match(/(\d+)\s*(minut|minuter|m)/);
+                const secondMatch = str.match(/(\d+)\s*(sekund|sekunder|s)/);
+
+                if (hourMatch) {
+                    totalSeconds += parseInt(hourMatch[1], 10) * 3600; // 1 hour = 3600 seconds
+                    parsedWithKeywords = true;
+                }
+                if (minuteMatch) {
+                    totalSeconds += parseInt(minuteMatch[1], 10) * 60; // 1 minute = 60 seconds
+                    parsedWithKeywords = true;
+                }
+                if (secondMatch) {
+                    totalSeconds += parseInt(secondMatch[1], 10);
+                    parsedWithKeywords = true;
+                }
+
+                if (parsedWithKeywords && totalSeconds > 0) {
+                    return totalSeconds;
+                }
+
+                // Try to parse HH:MM:SS format
+                const colonParts = str.split(':');
+                if (colonParts.length === 3) {
+                    const hours = parseInt(colonParts[0], 10);
+                    const minutes = parseInt(colonParts[1], 10);
+                    const seconds = parseInt(colonParts[2], 10);
+
+                    if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds) &&
+                        hours >= 0 && minutes >= 0 && minutes < 60 && seconds >= 0 && seconds < 60) {
+                        const timeFromColon = (hours * 3600) + (minutes * 60) + seconds;
+                        return timeFromColon > 0 ? timeFromColon : null;
+                    }
+                }
+
+                // Fallback to existing logic for formats like "20", "20.14", ":45"
                 try {
                     if (str.includes('.') || str.includes(':')) {
                         const separator = str.includes('.') ? '.' : ':';
@@ -208,12 +273,13 @@
                             if (isNaN(minutes) || isNaN(seconds) || minutes < 0 || seconds < 0 || seconds >= 60) {
                                 return null;
                             }
-                            const totalSeconds = (minutes * 60) + seconds;
-                            return totalSeconds > 0 ? totalSeconds : null;
+                            const timeFromDotOrColon = (minutes * 60) + seconds;
+                            return timeFromDotOrColon > 0 ? timeFromDotOrColon : null;
                         } else {
                             return null;
                         }
                     } else {
+                        // If it's just a number, treat as minutes
                         const minutes = parseInt(str, 10);
                         if (isNaN(minutes) || minutes <= 0) return null;
                         return minutes * 60;
@@ -257,7 +323,7 @@
                     const remainingMs = timer.endTime - now;
                     const remainingSeconds = Math.round(remainingMs / 1000);
                     
-                    // Uppdatera progressbaren
+                    // Update the progress bar
                     const elapsed = timer.totalSeconds * 1000 - remainingMs;
                     const progressPercentage = Math.max(0, 100 - (elapsed / (timer.totalSeconds * 1000)) * 100);
                     timer.ui.progressEl.style.width = `${progressPercentage}%`;
@@ -282,14 +348,14 @@
                 const labelEl = card.querySelector('.timer-label');
                 const timeEl = card.querySelector('.timer-time');
                 const stopBtn = card.querySelector('.stop-btn');
-                const progressEl = card.querySelector('.timer-progress'); // Hämta progress-elementet
+                const progressEl = card.querySelector('.timer-progress'); // Get the progress element
                 
                 const timerLabel = label || `Timer #${Math.floor(Math.random() * 1000)}`;
                 labelEl.textContent = timerLabel;
                 timeEl.textContent = formatTime(totalSeconds);
                 stopBtn.addEventListener('click', () => stopTimer(id));
                 
-                // Sätt progressbarens bredd till 100% initialt
+                // Set the progress bar width to 100% initially
                 progressEl.style.width = '100%'; 
 
                 if (noTimersMessage) noTimersMessage.classList.add('hidden');
@@ -301,7 +367,7 @@
                     label: timerLabel,
                     totalSeconds,
                     finished: false,
-                    ui: { card, labelEl, timeEl, stopBtn, progressEl } // Spara progressEl
+                    ui: { card, labelEl, timeEl, stopBtn, progressEl } // Save progressEl
                 };
 
                 timers.push(newTimer);
@@ -331,7 +397,7 @@
                 timer.ui.stopBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
                 timer.ui.stopBtn.classList.add('bg-green-600', 'cursor-not-allowed');
                 timer.ui.stopBtn.disabled = true;
-                timer.ui.progressEl.style.width = '0%'; // Sätt progress till 0% vid avslut
+                timer.ui.progressEl.style.width = '0%'; // Set progress to 0% when finished
 
                 playSound();
                 if(settings.notificationsEnabled) {
@@ -414,9 +480,8 @@
                     addTimerForm.reset();
                     addTimerModal.classList.add('hidden');
                 } else {
-                    // Replaced alert() with a custom message box or modal for better UX
-                    // For this example, I'll just log to console and highlight the input
-                    console.error('Ogiltigt tidsformat. Försök med t.ex. 20, 20.14 eller :45.');
+                    // Replaced alert() with a console log and visual highlight for better UX
+                    console.error('Ogiltigt tidsformat. Försök med t.ex. "20", "20.14", ":45", "1 timme 30 minuter", "2h", "45m", "10s", "01:30:15".');
                     timeInput.classList.add('border-red-500', 'ring-red-500'); // Highlight error
                     setTimeout(() => {
                         timeInput.classList.remove('border-red-500', 'ring-red-500');
@@ -443,13 +508,19 @@
                 }
             });
 
-            buyMeACoffeeLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                qrCodeModal.classList.remove('hidden');
-            });
+            // Removed event listeners for buyMeACoffeeLink and closeQrBtn
+            // buyMeACoffeeLink.addEventListener('click', (e) => {
+            //     e.preventDefault();
+            //     qrCodeModal.classList.remove('hidden');
+            // });
 
-            closeQrBtn.addEventListener('click', () => {
-                qrCodeModal.classList.add('hidden');
+            // closeQrBtn.addEventListener('click', () => {
+            //     qrCodeModal.classList.add('hidden');
+            // });
+
+            // Event listener for the help icon
+            timeInputHelpIcon.addEventListener('click', () => {
+                timeInputHelpText.classList.toggle('hidden');
             });
 
             // --- Init ---
