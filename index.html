@@ -16,22 +16,21 @@
             position: relative; /* Necessary for progress bar positioning */
             overflow: hidden; /* Hides the progress bar that goes outside the card */
             /* Background color removed from here so the progress bar is visible */
-        
-}
+        }
         .timer-card.done {
             animation: pulse-bg 1.5s infinite;
         }
         .timer-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 8px;
-    background-color: #3b82f6;
-    z-index: 1;
-    transition: width 0.25s linear;
-    border-bottom-left-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-}
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 8px;
+            background-color: #3b82f6; /* Tailwind blue-500 */
+            z-index: 1;
+            transition: width 0.25s linear;
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
         /* Ensure content is on top of the progress bar */
         .timer-card > div {
             position: relative;
@@ -93,6 +92,18 @@
             <button id="settings-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
                 <i class="fas fa-cog"></i>
                 <span>Inställningar</span>
+            </button>
+        </div>
+
+        <!-- New Export/Import Buttons -->
+        <div class="flex justify-center space-x-4 mb-8">
+            <button id="export-data-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
+                <i class="fas fa-download"></i>
+                <span>Exportera data</span>
+            </button>
+            <button id="import-data-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
+                <i class="fas fa-upload"></i>
+                <span>Importera data</span>
             </button>
         </div>
 
@@ -271,6 +282,10 @@
             const alarmCardTemplate = document.getElementById('alarm-card-template');
             const noAlarmsMessage = document.getElementById('no-alarms-message');
 
+            // --- Export/Import Selectors ---
+            const exportDataBtn = document.getElementById('export-data-btn');
+            const importDataBtn = document.getElementById('import-data-btn');
+
 
             // --- State ---
             let timers = [];
@@ -298,8 +313,8 @@
                 if (saved) {
                     Object.assign(settings, JSON.parse(saved));
                 }
-                alarmSoundSelect.value = settings.sound;
-                notificationsToggle.checked = settings.notificationsEnabled;
+                if (alarmSoundSelect) alarmSoundSelect.value = settings.sound;
+                if (notificationsToggle) notificationsToggle.checked = settings.notificationsEnabled;
                 updateNotificationPermissionStatus();
             };
 
@@ -749,6 +764,140 @@
                 });
             };
 
+            // --- Export/Import Functions ---
+            const exportData = () => {
+                const dataToExport = {
+                    timers: timers.map(t => ({
+                        id: t.id,
+                        endTime: t.endTime,
+                        label: t.label,
+                        totalSeconds: t.totalSeconds,
+                        finished: t.finished
+                    })),
+                    alarms: alarms.map(a => ({
+                        id: a.id,
+                        time: a.time.toISOString(),
+                        label: a.label,
+                        active: a.active,
+                        nextTriggerTime: a.nextTriggerTime ? a.nextTriggerTime.toISOString() : null
+                    })),
+                    settings: settings
+                };
+
+                const jsonString = JSON.stringify(dataToExport, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'pokertimer_data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                console.log('Data exporterad till pokertimer_data.json');
+            };
+
+            const importData = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'application/json';
+                input.style.display = 'none'; // Hide the input
+
+                input.addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (!file) {
+                        console.log('Ingen fil vald för import.');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const importedData = JSON.parse(e.target.result);
+
+                            // Clear existing timers and alarms UI
+                            timers.forEach(t => t.ui.card.remove());
+                            alarms.forEach(a => a.ui.card.remove());
+                            timers = [];
+                            alarms = [];
+                            clearInterval(mainInterval);
+                            clearInterval(alarmCheckInterval);
+                            mainInterval = null;
+                            alarmCheckInterval = null;
+
+                            // Import timers
+                            if (importedData.timers && Array.isArray(importedData.timers)) {
+                                importedData.timers.forEach(tData => {
+                                    // Recreate timer UI and push to timers array
+                                    const card = timerCardTemplate.content.cloneNode(true).firstElementChild;
+                                    card.dataset.id = tData.id;
+                                    const labelEl = card.querySelector('.timer-label');
+                                    const timeEl = card.querySelector('.timer-time');
+                                    const stopBtn = card.querySelector('.stop-btn');
+                                    const progressEl = card.querySelector('.timer-progress');
+                                    
+                                    labelEl.textContent = tData.label;
+                                    timeEl.textContent = formatTime(Math.round((tData.endTime - Date.now()) / 1000)); // Recalculate remaining time
+                                    stopBtn.addEventListener('click', () => stopTimer(tData.id));
+                                    progressEl.style.width = '100%'; // Initial state for progress bar
+
+                                    timersContainer.appendChild(card);
+                                    timers.push({
+                                        id: tData.id,
+                                        endTime: tData.endTime,
+                                        label: tData.label,
+                                        totalSeconds: tData.totalSeconds,
+                                        finished: tData.finished,
+                                        ui: { card, labelEl, timeEl, stopBtn, progressEl }
+                                    });
+                                });
+                            }
+
+                            // Import alarms
+                            if (importedData.alarms && Array.isArray(importedData.alarms)) {
+                                importedData.alarms.forEach(aData => {
+                                    const alarmTime = new Date(aData.time);
+                                    const nextTriggerTime = aData.nextTriggerTime ? new Date(aData.nextTriggerTime) : null;
+                                    
+                                    const newAlarm = {
+                                        id: aData.id,
+                                        time: alarmTime,
+                                        label: aData.label,
+                                        active: aData.active,
+                                        nextTriggerTime: nextTriggerTime
+                                    };
+                                    createAlarmCard(newAlarm); // This also adds to alarms array
+                                });
+                            }
+
+                            // Import settings
+                            if (importedData.settings) {
+                                Object.assign(settings, importedData.settings);
+                                saveSettings();
+                                loadSettings(); // Re-apply settings to UI
+                            }
+
+                            updateNoTimersMessage();
+                            updateNoAlarmsMessage();
+                            startMainInterval();
+                            startAlarmCheckInterval();
+                            console.log('Data importerad framgångsrikt!');
+                            alert('Data importerad framgångsrikt!'); // Temporary feedback
+                        } catch (error) {
+                            console.error('Fel vid import av data:', error);
+                            alert('Kunde inte importera data. Ogiltigt filformat eller korrupt fil.'); // Temporary feedback
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+
+                document.body.appendChild(input);
+                input.click(); // Open file dialog
+                document.body.removeChild(input); // Clean up the input element
+            };
+
+
             // --- Event Listeners ---
             if (addTimerBtn) {
                 addTimerBtn.addEventListener('click', () => {
@@ -851,6 +1000,16 @@
                     }
                 });
             } else { console.error("Error: addAlarmForm element not found."); }
+
+            // --- Export/Import Event Listeners ---
+            if (exportDataBtn) {
+                exportDataBtn.addEventListener('click', exportData);
+            } else { console.error("Error: exportDataBtn element not found."); }
+
+            if (importDataBtn) {
+                importDataBtn.addEventListener('click', importData);
+            } else { console.error("Error: importDataBtn element not found."); }
+
 
             // --- Init ---
             loadSettings();
