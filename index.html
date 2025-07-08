@@ -74,6 +74,17 @@
         .alarm-toggle-btn.active:hover {
             background-color: #059669; /* green-600 */
         }
+        /* Styling for export/import buttons */
+        .export-import-btn {
+            width: 3.5rem; /* w-14 */
+            height: 3.5rem; /* h-14 */
+            border-radius: 9999px; /* rounded-full */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem; /* text-2xl */
+            padding: 0; /* Remove padding to make it truly circular icon-only */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
@@ -95,18 +106,6 @@
             </button>
         </div>
 
-        <!-- New Export/Import Buttons -->
-        <div class="flex justify-center space-x-4 mb-8">
-            <button id="export-data-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
-                <i class="fas fa-download"></i>
-                <span>Exportera data</span>
-            </button>
-            <button id="import-data-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
-                <i class="fas fa-upload"></i>
-                <span>Importera data</span>
-            </button>
-        </div>
-
         <main id="timers-container" class="space-y-4">
             <div id="no-timers-message" class="text-center bg-gray-800 p-8 rounded-lg">
                 <i class="fas fa-clock fa-3x text-gray-500 mb-4"></i>
@@ -117,10 +116,17 @@
         <!-- New Alarms Section -->
         <section class="w-full max-w-2xl mx-auto mt-8">
             <h2 class="text-3xl font-bold text-blue-400 text-center mb-4">PokerLarm</h2>
-            <div class="flex justify-center mb-6">
+            <div class="flex justify-center space-x-4 mb-6">
                 <button id="add-alarm-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
                     <i class="fas fa-bell"></i>
                     <span>Lägg till nytt larm</span>
+                </button>
+                <!-- Export/Import Buttons - now smaller and icon-only -->
+                <button id="export-alarms-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-lg transition-transform transform hover:scale-110 export-import-btn" title="Exportera larm">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button id="import-alarms-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-lg transition-transform transform hover:scale-110 export-import-btn" title="Importera larm">
+                    <i class="fas fa-upload"></i>
                 </button>
             </div>
             <div id="alarms-container" class="space-y-4">
@@ -250,6 +256,11 @@
     </template>
 
     <script>
+        // Declare variables at a higher scope to ensure they are "defined"
+        let settingsForm;
+        let alarmSoundSelect;
+        let notificationsToggle;
+
         document.addEventListener('DOMContentLoaded', () => {
             // --- Selectors ---
             const timersContainer = document.getElementById('timers-container');
@@ -262,11 +273,14 @@
             const labelInput = document.getElementById('label-input');
             const cancelAddBtn = document.getElementById('cancel-add-btn');
             const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
-            const settingsForm = document.getElementById('settings-form');
+            
+            // Assign variables declared at higher scope
+            settingsForm = document.getElementById('settings-form');
+            alarmSoundSelect = document.getElementById('alarm-sound-select');
+            notificationsToggle = document.getElementById('notifications-toggle');
+
             const timerCardTemplate = document.getElementById('timer-card-template');
             const noTimersMessage = document.getElementById('no-timers-message');
-            const alarmSoundSelect = document.getElementById('alarm-sound-select');
-            const notificationsToggle = document.getElementById('notifications-toggle');
             const notificationStatus = document.getElementById('notification-permission-status');
             const timeInputHelpIcon = document.getElementById('time-input-help-icon');
             const timeInputHelpText = document.getElementById('time-input-help-text');
@@ -283,8 +297,8 @@
             const noAlarmsMessage = document.getElementById('no-alarms-message');
 
             // --- Export/Import Selectors ---
-            const exportDataBtn = document.getElementById('export-data-btn');
-            const importDataBtn = document.getElementById('import-data-btn');
+            const exportAlarmsBtn = document.getElementById('export-alarms-btn');
+            const importAlarmsBtn = document.getElementById('import-alarms-btn');
 
 
             // --- State ---
@@ -535,19 +549,23 @@
             };
             
             const updateNotificationPermissionStatus = () => {
-                notificationStatus.classList.remove('hidden');
-                if (Notification.permission === 'granted') {
-                    notificationStatus.textContent = 'Aviseringar är tillåtna.';
-                    notificationStatus.className = 'text-sm text-green-500 mb-6';
-                    notificationsToggle.checked = settings.notificationsEnabled;
-                } else if (Notification.permission === 'denied') {
-                    notificationStatus.textContent = 'Aviseringar är blockerade i din webbläsare.';
-                    notificationStatus.className = 'text-sm text-red-500 mb-6';
-                    notificationsToggle.checked = false;
-                    notificationsToggle.disabled = true;
-                } else {
-                     notificationStatus.textContent = 'Aviseringar har inte begärts ännu.';
-                     notificationStatus.className = 'text-sm text-yellow-500 mb-6';
+                if (notificationStatus) {
+                    notificationStatus.classList.remove('hidden');
+                    if (Notification.permission === 'granted') {
+                        notificationStatus.textContent = 'Aviseringar är tillåtna.';
+                        notificationStatus.className = 'text-sm text-green-500 mb-6';
+                        if (notificationsToggle) notificationsToggle.checked = settings.notificationsEnabled;
+                    } else if (Notification.permission === 'denied') {
+                        notificationStatus.textContent = 'Aviseringar är blockerade i din webbläsare.';
+                        notificationStatus.className = 'text-sm text-red-500 mb-6';
+                        if (notificationsToggle) {
+                            notificationsToggle.checked = false;
+                            notificationsToggle.disabled = true;
+                        }
+                    } else {
+                        notificationStatus.textContent = 'Aviseringar har inte begärts ännu.';
+                        notificationStatus.className = 'text-sm text-yellow-500 mb-6';
+                    }
                 }
             };
             
@@ -647,8 +665,13 @@
                     card.classList.add('opacity-50'); // Dim inactive alarms
                 }
 
-                toggleBtn.addEventListener('click', () => toggleAlarm(alarm.id));
-                removeBtn.addEventListener('click', () => removeAlarm(alarm.id));
+                // Attach event listeners
+                if (toggleBtn) {
+                    toggleBtn.addEventListener('click', () => toggleAlarm(alarm.id));
+                }
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', () => removeAlarm(alarm.id));
+                }
 
                 alarmsContainer.appendChild(card);
 
@@ -694,6 +717,7 @@
             };
 
             const updateAlarmToggleButton = (button, isActive) => {
+                if (!button) return; // Ensure button exists
                 button.classList.remove('bg-green-600', 'bg-gray-600', 'hover:bg-green-700', 'hover:bg-gray-500');
                 button.innerHTML = '';
                 if (isActive) {
@@ -719,10 +743,17 @@
             };
 
             const updateNoAlarmsMessage = () => {
-                if (alarms.length === 0) {
-                    noAlarmsMessage.classList.remove('hidden');
+                console.log('updateNoAlarmsMessage called. alarms.length:', alarms.length);
+                if (noAlarmsMessage) { // Ensure the element exists
+                    if (alarms.length === 0) {
+                        noAlarmsMessage.classList.remove('hidden');
+                        console.log('No alarms message: visible');
+                    } else {
+                        noAlarmsMessage.classList.add('hidden');
+                        console.log('No alarms message: hidden');
+                    }
                 } else {
-                    noAlarmsMessage.classList.add('hidden');
+                    console.error("Error: noAlarmsMessage element not found in updateNoAlarmsMessage.");
                 }
             };
 
@@ -755,10 +786,14 @@
                             saveAlarms(); // Save updated nextTriggerTime
                             
                             // Optional: Briefly highlight the alarm card when it triggers
-                            alarm.ui.card.classList.add('border-green-500', 'border-4');
-                            setTimeout(() => {
-                                alarm.ui.card.classList.remove('border-green-500', 'border-4');
-                            }, 3000);
+                            if (alarm.ui && alarm.ui.card) { // Check before accessing UI
+                                alarm.ui.card.classList.add('border-green-500', 'border-4');
+                                setTimeout(() => {
+                                    if (alarm.ui && alarm.ui.card) { // Check again before removing
+                                        alarm.ui.card.classList.remove('border-green-500', 'border-4');
+                                    }
+                                }, 3000);
+                            }
                         }
                     }
                 });
@@ -767,13 +802,7 @@
             // --- Export/Import Functions ---
             const exportData = () => {
                 const dataToExport = {
-                    timers: timers.map(t => ({
-                        id: t.id,
-                        endTime: t.endTime,
-                        label: t.label,
-                        totalSeconds: t.totalSeconds,
-                        finished: t.finished
-                    })),
+                    // Only export alarms and settings
                     alarms: alarms.map(a => ({
                         id: a.id,
                         time: a.time.toISOString(),
@@ -790,12 +819,12 @@
 
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'pokertimer_data.json';
+                a.download = 'pokertimer_larm_data.json'; // Changed filename
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                console.log('Data exporterad till pokertimer_data.json');
+                console.log('Larmdata exporterad till pokertimer_larm_data.json');
             };
 
             const importData = () => {
@@ -815,44 +844,15 @@
                     reader.onload = (e) => {
                         try {
                             const importedData = JSON.parse(e.target.result);
+                            console.log('Importerad data:', importedData);
 
-                            // Clear existing timers and alarms UI
-                            timers.forEach(t => t.ui.card.remove());
-                            alarms.forEach(a => a.ui.card.remove());
-                            timers = [];
-                            alarms = [];
-                            clearInterval(mainInterval);
+                            // Clear existing alarms UI
+                            alarms.forEach(a => {
+                                if (a.ui && a.ui.card) a.ui.card.remove();
+                            });
+                            alarms = []; // Clear the array
                             clearInterval(alarmCheckInterval);
-                            mainInterval = null;
                             alarmCheckInterval = null;
-
-                            // Import timers
-                            if (importedData.timers && Array.isArray(importedData.timers)) {
-                                importedData.timers.forEach(tData => {
-                                    // Recreate timer UI and push to timers array
-                                    const card = timerCardTemplate.content.cloneNode(true).firstElementChild;
-                                    card.dataset.id = tData.id;
-                                    const labelEl = card.querySelector('.timer-label');
-                                    const timeEl = card.querySelector('.timer-time');
-                                    const stopBtn = card.querySelector('.stop-btn');
-                                    const progressEl = card.querySelector('.timer-progress');
-                                    
-                                    labelEl.textContent = tData.label;
-                                    timeEl.textContent = formatTime(Math.round((tData.endTime - Date.now()) / 1000)); // Recalculate remaining time
-                                    stopBtn.addEventListener('click', () => stopTimer(tData.id));
-                                    progressEl.style.width = '100%'; // Initial state for progress bar
-
-                                    timersContainer.appendChild(card);
-                                    timers.push({
-                                        id: tData.id,
-                                        endTime: tData.endTime,
-                                        label: tData.label,
-                                        totalSeconds: tData.totalSeconds,
-                                        finished: tData.finished,
-                                        ui: { card, labelEl, timeEl, stopBtn, progressEl }
-                                    });
-                                });
-                            }
 
                             // Import alarms
                             if (importedData.alarms && Array.isArray(importedData.alarms)) {
@@ -860,14 +860,15 @@
                                     const alarmTime = new Date(aData.time);
                                     const nextTriggerTime = aData.nextTriggerTime ? new Date(aData.nextTriggerTime) : null;
                                     
-                                    const newAlarm = {
+                                    const newAlarm = { // This is the object that will go into the global alarms array
                                         id: aData.id,
                                         time: alarmTime,
                                         label: aData.label,
                                         active: aData.active,
                                         nextTriggerTime: nextTriggerTime
                                     };
-                                    createAlarmCard(newAlarm); // This also adds to alarms array
+                                    alarms.push(newAlarm); // Add to the global alarms array
+                                    createAlarmCard(newAlarm); // Create UI for this exact object
                                 });
                             }
 
@@ -878,15 +879,12 @@
                                 loadSettings(); // Re-apply settings to UI
                             }
 
-                            updateNoTimersMessage();
-                            updateNoAlarmsMessage();
-                            startMainInterval();
+                            // Do NOT touch existing timers
+                            updateNoAlarmsMessage(); // This should now correctly hide/show
                             startAlarmCheckInterval();
-                            console.log('Data importerad framgångsrikt!');
-                            alert('Data importerad framgångsrikt!'); // Temporary feedback
+                            console.log('Larmdata importerad framgångsrikt!');
                         } catch (error) {
-                            console.error('Fel vid import av data:', error);
-                            alert('Kunde inte importera data. Ogiltigt filformat eller korrupt fil.'); // Temporary feedback
+                            console.error('Fel vid import av larmdata:', error);
                         }
                     };
                     reader.readAsText(file);
@@ -901,23 +899,27 @@
             // --- Event Listeners ---
             if (addTimerBtn) {
                 addTimerBtn.addEventListener('click', () => {
-                    addTimerModal.classList.remove('hidden');
-                    timeInput.focus();
+                    if (addTimerModal) addTimerModal.classList.remove('hidden');
+                    if (timeInput) timeInput.focus();
                 });
             } else { console.error("Error: addTimerBtn element not found."); }
 
             if (cancelAddBtn) {
-                cancelAddBtn.addEventListener('click', () => addTimerModal.classList.add('hidden'));
+                cancelAddBtn.addEventListener('click', () => {
+                    if (addTimerModal) addTimerModal.classList.add('hidden');
+                });
             } else { console.error("Error: cancelAddBtn element not found."); }
 
             if (settingsBtn) {
                 settingsBtn.addEventListener('click', () => {
-                    settingsModal.classList.remove('hidden');
+                    if (settingsModal) settingsModal.classList.remove('hidden');
                 });
             } else { console.error("Error: settingsBtn element not found."); }
 
             if (cancelSettingsBtn) {
-                cancelSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+                cancelSettingsBtn.addEventListener('click', () => {
+                    if (settingsModal) settingsModal.classList.add('hidden');
+                });
             } else { console.error("Error: cancelSettingsBtn element not found."); }
             
             if (addTimerForm) {
@@ -927,25 +929,28 @@
                     if (totalSeconds) {
                         addNewTimer(totalSeconds, labelInput.value);
                         addTimerForm.reset();
-                        addTimerModal.classList.add('hidden');
+                        if (addTimerModal) addTimerModal.classList.add('hidden');
                     } else {
                         console.error('Ogiltigt tidsformat. Försök med t.ex. "20", "20.14", ":45", "1 timme 30 minuter", "2h", "45m", "10s", "01:30:15".');
-                        timeInput.classList.add('border-red-500', 'ring-red-500'); // Highlight error
-                        setTimeout(() => {
-                            timeInput.classList.remove('border-red-500', 'ring-red-500');
-                        }, 2000);
-                        timeInput.focus();
+                        if (timeInput) {
+                            timeInput.classList.add('border-red-500', 'ring-red-500'); // Highlight error
+                            setTimeout(() => {
+                                if (timeInput) timeInput.classList.remove('border-red-500', 'ring-red-500');
+                            }, 2000);
+                            timeInput.focus();
+                        }
                     }
                 });
             } else { console.error("Error: addTimerForm element not found."); }
 
+            // Ensure settingsForm is not null before adding listener
             if (settingsForm) {
                 settingsForm.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    settings.sound = alarmSoundSelect.value;
-                    settings.notificationsEnabled = notificationsToggle.checked;
+                    if (alarmSoundSelect) settings.sound = alarmSoundSelect.value;
+                    if (notificationsToggle) settings.notificationsEnabled = notificationsToggle.checked;
                     saveSettings();
-                    settingsModal.classList.add('hidden');
+                    if (settingsModal) settingsModal.classList.add('hidden');
 
                     if (settings.notificationsEnabled && Notification.permission !== 'granted') {
                         requestNotificationPermission();
@@ -973,13 +978,15 @@
             // --- Alarm Event Listeners ---
             if (addAlarmBtn) {
                 addAlarmBtn.addEventListener('click', () => {
-                    addAlarmModal.classList.remove('hidden');
-                    alarmTimeInput.focus();
+                    if (addAlarmModal) addAlarmModal.classList.remove('hidden');
+                    if (alarmTimeInput) alarmTimeInput.focus();
                 });
             } else { console.error("Error: addAlarmBtn element not found."); }
 
             if (cancelAddAlarmBtn) {
-                cancelAddAlarmBtn.addEventListener('click', () => addAlarmModal.classList.add('hidden'));
+                cancelAddAlarmBtn.addEventListener('click', () => {
+                    if (addAlarmModal) addAlarmModal.classList.add('hidden');
+                });
             } else { console.error("Error: cancelAddAlarmBtn element not found."); }
 
             if (addAlarmForm) {
@@ -989,26 +996,28 @@
                     if (alarmTime) {
                         addNewAlarm(alarmTime, alarmLabelInput.value);
                         addAlarmForm.reset();
-                        addAlarmModal.classList.add('hidden');
+                        if (addAlarmModal) addAlarmModal.classList.add('hidden');
                     } else {
                         console.error('Ogiltigt tidsformat för larm. Använd format som HH:MM (t.ex. 14:30).');
-                        alarmTimeInput.classList.add('border-red-500', 'ring-red-500');
-                        setTimeout(() => {
-                            alarmTimeInput.classList.remove('border-red-500', 'ring-red-500');
-                        }, 2000);
-                        alarmTimeInput.focus();
+                        if (alarmTimeInput) {
+                            alarmTimeInput.classList.add('border-red-500', 'ring-red-500');
+                            setTimeout(() => {
+                                if (alarmTimeInput) alarmTimeInput.classList.remove('border-red-500', 'ring-red-500');
+                            }, 2000);
+                            alarmTimeInput.focus();
+                        }
                     }
                 });
             } else { console.error("Error: addAlarmForm element not found."); }
 
             // --- Export/Import Event Listeners ---
-            if (exportDataBtn) {
-                exportDataBtn.addEventListener('click', exportData);
-            } else { console.error("Error: exportDataBtn element not found."); }
+            if (exportAlarmsBtn) {
+                exportAlarmsBtn.addEventListener('click', exportData);
+            } else { console.error("Error: exportAlarmsBtn element not found."); }
 
-            if (importDataBtn) {
-                importDataBtn.addEventListener('click', importData);
-            } else { console.error("Error: importDataBtn element not found."); }
+            if (importAlarmsBtn) {
+                importAlarmsBtn.addEventListener('click', importData);
+            } else { console.error("Error: importAlarmsBtn element not found."); }
 
 
             // --- Init ---
