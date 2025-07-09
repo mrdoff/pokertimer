@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Länk till webbapp-manifestet för PWA-funktionalitet -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1a202c"/> <!-- Temafärg för webbläsarens UI, matchar bakgrunden -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -185,7 +188,7 @@
                 </div>
                 <div class="mb-6 flex items-center">
                     <input type="checkbox" id="notifications-toggle" class="h-5 w-5 rounded bg-gray-700 border-gray-500 text-blue-500 focus:ring-blue-500 cursor-pointer">
-                    <label for="notifications-toggle" class="ml-3 text-gray-300 cursor-pointer">Visa webbläsaraviseringar</label>
+                    <label for="notifications-toggle" class="ml-3 text-gray-300 cursor-pointer">Visa webbläsaviseringar</label>
                 </div>
                 <div id="notification-permission-status" class="text-sm text-gray-500 mb-6 hidden"></div>
 
@@ -516,7 +519,8 @@
 
                 playSound();
                 if(settings.notificationsEnabled) {
-                    showNotification('PokerTimer - Tiden är ute!', `Din timer "${timer.label}" är klar.`);
+                    // Använd en generisk ikon för aviseringar
+                    showNotification('PokerTimer - Tiden är ute!', `Din timer "${timer.label}" är klar.`, '/icons/icon-192x192.png');
                 }
 
                 setTimeout(() => stopTimer(id), 5000);
@@ -538,12 +542,12 @@
                 }
             };
             
-            // Modified showNotification to accept title and body
-            const showNotification = (title, body) => {
+            // Modified showNotification to accept title, body and icon
+            const showNotification = (title, body, iconUrl) => {
                  if (Notification.permission === 'granted') {
                      const notification = new Notification(title, {
                          body: body,
-                         icon: 'https://img.icons8.com/plasticine/100/000000/timer.png' // Generic icon, could be bell for alarms
+                         icon: iconUrl // Använd den angivna ikonen
                      });
                  }
             };
@@ -778,7 +782,8 @@
                             console.log(`Alarm triggered: ${alarm.label} at ${formatAlarmTime(alarm.time)}`);
                             playSound();
                             if (settings.notificationsEnabled) {
-                                showNotification(`PokerTimer - Larm!`, `Det är dags för ditt larm: "${alarm.label}" (${formatAlarmTime(alarm.time)})`);
+                                // Använd en specifik ikon för larmaviseringar
+                                showNotification(`PokerTimer - Larm!`, `Det är dags för ditt larm: "${alarm.label}" (${formatAlarmTime(alarm.time)})`, '/icons/icon-bell-192x192.png');
                             }
 
                             // Set next trigger time for tomorrow
@@ -1029,6 +1034,18 @@
                 setTimeout(requestNotificationPermission, 1500);
             }
 
+            // Registrera Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                        })
+                        .catch(err => {
+                            console.log('ServiceWorker registration failed: ', err);
+                        });
+                });
+            }
         });
     </script>
 </body>
