@@ -15,7 +15,7 @@
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        .timer-card {
+        .timer-card, .alarm-card { /* Apply common styles to both timer and alarm cards */
             position: relative; /* Necessary for progress bar positioning */
             overflow: hidden; /* Hides the progress bar that goes outside the card */
             background-color: #1f2937; /* Reverted: gray-800 */
@@ -23,7 +23,7 @@
         .timer-card.done {
             animation: pulse-bg 1.5s infinite;
         }
-        .timer-progress {
+        .timer-progress, .alarm-progress { /* Apply common styles to both progress bars */
             position: absolute;
             bottom: 0;
             left: 0;
@@ -34,8 +34,8 @@
             border-bottom-left-radius: 0.5rem;
             border-bottom-right-radius: 0.5rem;
         }
-        /* Ensure content is on top of the progress bar */
-        .timer-card > div {
+        /* Ensure content is on top of the progress bar for both */
+        .timer-card > div, .alarm-card > div {
             position: relative;
             z-index: 1;
         }
@@ -111,6 +111,12 @@
         }
         .global-alarm-toggle-btn.active:hover {
             background-color: #059669; /* green-600 */
+        }
+        /* Style for alarm countdown */
+        .alarm-countdown {
+            font-size: 0.9rem; /* text-sm */
+            color: #9ca3af; /* gray-400 */
+            margin-top: 0.25rem;
         }
     </style>
 </head>
@@ -216,6 +222,11 @@
                     <label for="notifications-toggle" class="ml-3 text-gray-300 cursor-pointer">Visa webbläsaraviseringar</label>
                 </div>
                 <div id="notification-permission-status" class="text-sm text-gray-500 mb-6 hidden"></div>
+
+                <div class="mb-6 flex items-center">
+                    <input type="checkbox" id="alarm-countdown-toggle" class="h-5 w-5 rounded bg-gray-700 border-gray-500 text-blue-500 focus:ring-blue-500 cursor-pointer">
+                    <label for="alarm-countdown-toggle" class="ml-3 text-gray-300 cursor-pointer">Visa nedräkning för larm</label>
+                </div>
 
                 <div class="mb-6">
                     <label class="block text-gray-400 text-sm font-bold mb-2">Larmdata</label>
@@ -345,22 +356,26 @@
 
     <!-- New Alarm Card Template -->
     <template id="alarm-card-template">
-        <div class="alarm-card bg-gray-800 rounded-lg shadow-lg p-6 flex items-center justify-between transition-all duration-300">
-            <div class="flex-grow">
-                <p class="alarm-label font-bold text-xl text-white truncate"></p>
-                <p class="alarm-time font-mono text-4xl tracking-widest text-green-400"></p>
+        <div class="alarm-card bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col justify-between transition-all duration-300">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex-grow">
+                    <p class="alarm-label font-bold text-xl text-white truncate"></p>
+                    <p class="alarm-time font-mono text-4xl tracking-widest text-green-400"></p>
+                    <p class="alarm-countdown text-sm text-gray-400 mt-1 hidden"></p> <!-- New countdown element -->
+                </div>
+                <div class="flex space-x-2">
+                    <button class="edit-alarm-btn bg-gray-600 hover:bg-gray-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Redigera larm">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="alarm-toggle-btn w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Aktivera/Inaktivera larm">
+                        <i class="fas fa-toggle-on text-green-500 text-3xl"></i>
+                    </button>
+                    <button class="remove-alarm-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Ta bort larm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <button class="edit-alarm-btn bg-gray-600 hover:bg-gray-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Redigera larm">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="alarm-toggle-btn w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Aktivera/Inaktivera larm">
-                    <i class="fas fa-toggle-on text-green-500 text-3xl"></i>
-                </button>
-                <button class="remove-alarm-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Ta bort larm">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
+            <div class="alarm-progress"></div> <!-- Alarm progress bar -->
         </div>
     </template>
 
@@ -369,6 +384,7 @@
         let settingsForm;
         let alarmSoundSelect;
         let notificationsToggle;
+        let alarmCountdownToggle; // New variable for countdown toggle
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- Selectors ---
@@ -387,6 +403,7 @@
             settingsForm = document.getElementById('settings-form');
             alarmSoundSelect = document.getElementById('alarm-sound-select');
             notificationsToggle = document.getElementById('notifications-toggle');
+            alarmCountdownToggle = document.getElementById('alarm-countdown-toggle'); // Get the new toggle
 
             const timerCardTemplate = document.getElementById('timer-card-template');
             const noTimersMessage = document.getElementById('no-timers-message');
@@ -440,7 +457,8 @@
             let alarmCheckInterval; // Interval for checking alarms
             const settings = {
                 sound: 'Alarm 1',
-                notificationsEnabled: true
+                notificationsEnabled: true,
+                showAlarmCountdown: true // New setting - default to true
             };
 
             const sounds = {
@@ -482,6 +500,7 @@
                 }
                 if (alarmSoundSelect) alarmSoundSelect.value = settings.sound;
                 if (notificationsToggle) notificationsToggle.checked = settings.notificationsEnabled;
+                if (alarmCountdownToggle) alarmCountdownToggle.checked = settings.showAlarmCountdown; // Load new setting
                 updateNotificationPermissionStatus();
             };
 
@@ -561,6 +580,24 @@
                 const minutes = Math.floor(totalSeconds / 60);
                 const seconds = totalSeconds % 60;
                 return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            };
+
+            const formatCountdown = (totalSeconds) => {
+                if (totalSeconds < 0) totalSeconds = 0;
+                const days = Math.floor(totalSeconds / (3600 * 24));
+                totalSeconds %= (3600 * 24);
+                const hours = Math.floor(totalSeconds / 3600);
+                totalSeconds %= 3600;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+
+                let parts = [];
+                if (days > 0) parts.push(`${days}d`);
+                if (hours > 0 || days > 0) parts.push(`${String(hours).padStart(2, '0')}h`);
+                parts.push(`${String(minutes).padStart(2, '0')}m`);
+                parts.push(`${String(seconds).padStart(2, '0')}s`);
+
+                return parts.join(' ');
             };
             
             const startMainInterval = () => {
@@ -753,7 +790,8 @@
                     time: alarm.time.toISOString(), // Store Date as ISO string
                     label: alarm.label,
                     active: alarm.active,
-                    nextTriggerTime: alarm.nextTriggerTime ? alarm.nextTriggerTime.toISOString() : null // Store next trigger time
+                    nextTriggerTime: alarm.nextTriggerTime ? alarm.nextTriggerTime.toISOString() : null, // Store next trigger time
+                    initialTriggerTime: alarm.initialTriggerTime ? alarm.initialTriggerTime.toISOString() : null // Store initial trigger time for progress bar
                 }));
                 localStorage.setItem('pokerTimerAlarms', JSON.stringify(simplifiedAlarms));
             };
@@ -769,12 +807,18 @@
                             label: alarmData.label,
                             active: alarmData.active,
                             nextTriggerTime: alarmData.nextTriggerTime ? new Date(alarmData.nextTriggerTime) : null,
+                            initialTriggerTime: alarmData.initialTriggerTime ? new Date(alarmData.initialTriggerTime) : null, // Load initial trigger time
                             ui: {} // UI elements will be re-created
                         };
                         return alarm; // Return the alarm object for sorting
                     });
-                    // Sort alarms after loading
-                    alarms.sort((a, b) => a.time.getTime() - b.time.getTime());
+                    // Sort alarms after loading by nextTriggerTime
+                    alarms.sort((a, b) => {
+                        // Handle cases where nextTriggerTime might be null (e.g., inactive alarms)
+                        const timeA = a.nextTriggerTime ? a.nextTriggerTime.getTime() : Infinity;
+                        const timeB = b.nextTriggerTime ? b.nextTriggerTime.getTime() : Infinity;
+                        return timeA - timeB;
+                    });
                     renderAlarms(); // Render all alarms after sorting
                     updateNoAlarmsMessage();
                     startAlarmCheckInterval();
@@ -789,6 +833,7 @@
                 alarms.forEach(alarm => {
                     createAlarmCard(alarm);
                 });
+                updateAlarmCountdowns(); // Update countdowns immediately after rendering
             };
 
             const parseAlarmTimeInput = (str) => {
@@ -830,9 +875,11 @@
 
                 const labelEl = card.querySelector('.alarm-label');
                 const timeEl = card.querySelector('.alarm-time');
+                const countdownEl = card.querySelector('.alarm-countdown'); // Get the new countdown element
                 const toggleBtn = card.querySelector('.alarm-toggle-btn');
                 const removeBtn = card.querySelector('.remove-alarm-btn');
                 const editBtn = card.querySelector('.edit-alarm-btn'); // Get edit button
+                const progressEl = card.querySelector('.alarm-progress'); // Get the progress bar element
 
                 labelEl.textContent = alarm.label;
                 timeEl.textContent = formatAlarmTime(alarm.time);
@@ -842,6 +889,17 @@
                 if (!alarm.active) {
                     card.classList.add('opacity-50'); // Dim inactive alarms
                 }
+
+                // Set initial progress bar width based on settings
+                if (settings.showAlarmCountdown && alarm.active && alarm.nextTriggerTime && alarm.initialTriggerTime) {
+                    const totalDuration = alarm.nextTriggerTime.getTime() - alarm.initialTriggerTime.getTime();
+                    const remainingDuration = alarm.nextTriggerTime.getTime() - Date.now();
+                    const percentage = (remainingDuration / totalDuration) * 100;
+                    progressEl.style.width = `${Math.max(0, percentage)}%`;
+                } else {
+                    progressEl.style.width = '0%'; // Hide or set to 0 if inactive/not set or countdown not shown
+                }
+
 
                 // Attach event listeners
                 if (toggleBtn) {
@@ -862,7 +920,7 @@
 
                 alarmsContainer.appendChild(card);
 
-                alarm.ui = { card, labelEl, timeEl, toggleBtn, removeBtn, editBtn }; // Save editBtn
+                alarm.ui = { card, labelEl, timeEl, countdownEl, toggleBtn, removeBtn, editBtn, progressEl }; // Save progressEl
             };
 
             const addNewAlarm = (alarmTime, label) => {
@@ -872,10 +930,16 @@
                     time: alarmTime, // This is a Date object (next occurrence)
                     label: label || `Larm #${alarms.length + 1}`,
                     active: true,
-                    nextTriggerTime: alarmTime // Initial trigger time
+                    nextTriggerTime: alarmTime, // Initial trigger time
+                    initialTriggerTime: new Date() // Store the time when the alarm was created for progress bar calculation
                 };
                 alarms.push(newAlarm);
-                alarms.sort((a, b) => a.time.getTime() - b.time.getTime()); // Sort after adding
+                // Sort after adding by nextTriggerTime
+                alarms.sort((a, b) => {
+                    const timeA = a.nextTriggerTime ? a.nextTriggerTime.getTime() : Infinity;
+                    const timeB = b.nextTriggerTime ? b.nextTriggerTime.getTime() : Infinity;
+                    return timeA - timeB;
+                });
                 renderAlarms(); // Re-render to reflect new sorted order
                 saveAlarms();
                 updateNoAlarmsMessage();
@@ -897,11 +961,22 @@
                             nextTime.setDate(nextTime.getDate() + 1);
                         }
                         alarm.nextTriggerTime = nextTime;
+                        alarm.initialTriggerTime = now; // Reset initial trigger time when activated
                     } else {
                         alarm.ui.card.classList.add('opacity-50');
                         alarm.nextTriggerTime = null; // No next trigger if inactive
+                        alarm.initialTriggerTime = null; // Clear initial trigger time
+                        if (alarm.ui.progressEl) alarm.ui.progressEl.style.width = '0%'; // Hide progress bar
                     }
                     saveAlarms();
+                    // After toggling, the order might change, so re-render
+                    alarms.sort((a, b) => {
+                        const timeA = a.nextTriggerTime ? a.nextTriggerTime.getTime() : Infinity;
+                        const timeB = b.nextTriggerTime ? b.nextTriggerTime.getTime() : Infinity;
+                        return timeA - timeB;
+                    });
+                    renderAlarms(); // Re-render
+                    updateAlarmCountdowns(); // Update countdowns on toggle
                 }
             };
 
@@ -958,8 +1033,32 @@
 
             const checkAlarms = () => {
                 const now = new Date();
+                let alarmsChangedOrder = false; // Flag to indicate if re-rendering is needed
+
                 alarms.forEach(alarm => {
-                    if (alarm.active && alarm.nextTriggerTime) {
+                    if (alarm.active && alarm.nextTriggerTime && alarm.initialTriggerTime) {
+                        const totalDuration = alarm.nextTriggerTime.getTime() - alarm.initialTriggerTime.getTime();
+                        const remainingMs = alarm.nextTriggerTime.getTime() - now.getTime();
+                        const remainingSeconds = Math.round(remainingMs / 1000);
+
+                        // Update countdown display
+                        if (settings.showAlarmCountdown && alarm.ui.countdownEl) {
+                            alarm.ui.countdownEl.textContent = `Tid kvar: ${formatCountdown(remainingSeconds)}`;
+                            alarm.ui.countdownEl.classList.remove('hidden');
+                        } else if (alarm.ui.countdownEl) {
+                            alarm.ui.countdownEl.classList.add('hidden');
+                        }
+
+                        // Update progress bar
+                        if (alarm.ui.progressEl) {
+                            if (settings.showAlarmCountdown) {
+                                const progressPercentage = (remainingMs / totalDuration) * 100;
+                                alarm.ui.progressEl.style.width = `${Math.max(0, progressPercentage)}%`;
+                            } else {
+                                alarm.ui.progressEl.style.width = '0%'; // Hide progress bar if setting is off
+                            }
+                        }
+                        
                         // Check if current time is past or at the next trigger time
                         // Using a small buffer (e.g., 500ms) to account for interval timing
                         if (now.getTime() >= alarm.nextTriggerTime.getTime() - 500) {
@@ -973,7 +1072,9 @@
 
                             // Set next trigger time for tomorrow
                             alarm.nextTriggerTime.setDate(alarm.nextTriggerTime.getDate() + 1);
-                            saveAlarms(); // Save updated nextTriggerTime
+                            alarm.initialTriggerTime = now; // Reset initial trigger time for the next cycle
+                            saveAlarms(); // Save updated nextTriggerTime and initialTriggerTime
+                            alarmsChangedOrder = true; // Set flag to re-render
                             
                             // Optional: Briefly highlight the alarm card when it triggers
                             if (alarm.ui && alarm.ui.card) { // Check before accessing UI
@@ -984,6 +1085,42 @@
                                     }
                                 }, 3000);
                             }
+                        }
+                    } else {
+                        // Hide countdown and progress bar if alarm is inactive or initialTriggerTime is missing
+                        if (alarm.ui.countdownEl) alarm.ui.countdownEl.classList.add('hidden');
+                        if (alarm.ui.progressEl) alarm.ui.progressEl.style.width = '0%';
+                    }
+                });
+
+                if (alarmsChangedOrder) {
+                    // Sort by nextTriggerTime if any alarm triggered and its nextTriggerTime changed
+                    alarms.sort((a, b) => {
+                        const timeA = a.nextTriggerTime ? a.nextTriggerTime.getTime() : Infinity;
+                        const timeB = b.nextTriggerTime ? b.nextTriggerTime.getTime() : Infinity;
+                        return timeA - timeB;
+                    });
+                    renderAlarms(); // Re-render if order changed
+                }
+            };
+
+            // This function is specifically for updating countdown visibility based on settings
+            const updateAlarmCountdowns = () => {
+                alarms.forEach(alarm => {
+                    if (alarm.ui.countdownEl && alarm.ui.progressEl) {
+                        if (settings.showAlarmCountdown && alarm.active && alarm.nextTriggerTime && alarm.initialTriggerTime) {
+                            const now = new Date();
+                            const remainingMs = alarm.nextTriggerTime.getTime() - now.getTime();
+                            const remainingSeconds = Math.round(remainingMs / 1000);
+                            alarm.ui.countdownEl.textContent = `Tid kvar: ${formatCountdown(remainingSeconds)}`;
+                            alarm.ui.countdownEl.classList.remove('hidden');
+
+                            const totalDuration = alarm.nextTriggerTime.getTime() - alarm.initialTriggerTime.getTime();
+                            const progressPercentage = (remainingMs / totalDuration) * 100;
+                            alarm.ui.progressEl.style.width = `${Math.max(0, progressPercentage)}%`;
+                        } else {
+                            alarm.ui.countdownEl.classList.add('hidden');
+                            alarm.ui.progressEl.style.width = '0%';
                         }
                     }
                 });
@@ -1009,19 +1146,30 @@
                                 nextTime.setDate(nextTime.getDate() + 1);
                             }
                             alarm.nextTriggerTime = nextTime;
+                            alarm.initialTriggerTime = now; // Reset initial trigger time when activated
                         } else {
                             alarm.ui.card.classList.add('opacity-50');
                             alarm.nextTriggerTime = null;
+                            alarm.initialTriggerTime = null; // Clear initial trigger time
+                            if (alarm.ui.progressEl) alarm.ui.progressEl.style.width = '0%'; // Hide progress bar
                         }
                     }
                 });
                 saveAlarms();
+                // After toggling all, re-sort and re-render
+                alarms.sort((a, b) => {
+                    const timeA = a.nextTriggerTime ? a.nextTriggerTime.getTime() : Infinity;
+                    const timeB = b.nextTriggerTime ? b.nextTriggerTime.getTime() : Infinity;
+                    return timeA - timeB;
+                });
+                renderAlarms();
                 updateToggleAllAlarmsButton(); // Update the global toggle button's appearance
                 if (newState && alarms.length > 0) { // Only start interval if there are alarms and they are being activated
                     startAlarmCheckInterval();
                 } else if (!newState) { // Stop if all are turned off
                     stopAlarmCheckInterval();
                 }
+                updateAlarmCountdowns(); // Update countdowns after global toggle
             };
 
             const updateToggleAllAlarmsButton = () => {
@@ -1052,7 +1200,8 @@
                         time: a.time.toISOString(),
                         label: a.label,
                         active: a.active,
-                        nextTriggerTime: a.nextTriggerTime ? a.nextTriggerTime.toISOString() : null
+                        nextTriggerTime: a.nextTriggerTime ? a.nextTriggerTime.toISOString() : null,
+                        initialTriggerTime: a.initialTriggerTime ? a.initialTriggerTime.toISOString() : null
                     })),
                     settings: settings
                 };
@@ -1103,17 +1252,24 @@
                                 importedData.alarms.forEach(aData => {
                                     const alarmTime = new Date(aData.time);
                                     const nextTriggerTime = aData.nextTriggerTime ? new Date(aData.nextTriggerTime) : null;
+                                    const initialTriggerTime = aData.initialTriggerTime ? new Date(aData.initialTriggerTime) : null;
                                     
                                     const newAlarm = { // This is the object that will go into the global alarms array
                                         id: aData.id,
                                         time: alarmTime,
                                         label: aData.label,
                                         active: aData.active,
-                                        nextTriggerTime: nextTriggerTime
+                                        nextTriggerTime: nextTriggerTime,
+                                        initialTriggerTime: initialTriggerTime
                                     };
                                     alarms.push(newAlarm); // Add to the global alarms array
                                 });
-                                alarms.sort((a, b) => a.time.getTime() - b.time.getTime()); // Sort after importing all
+                                // Sort after importing all by nextTriggerTime
+                                alarms.sort((a, b) => {
+                                    const timeA = a.nextTriggerTime ? a.nextTriggerTime.getTime() : Infinity;
+                                    const timeB = b.nextTriggerTime ? b.nextTriggerTime.getTime() : Infinity;
+                                    return timeA - timeB;
+                                });
                                 renderAlarms(); // Re-render after sorting
                             }
 
@@ -1171,7 +1327,7 @@
                         setTimeout(() => {
                             if (editTimeInput) editTimeInput.classList.remove('border-red-500', 'ring-red-500');
                         }, 2000);
-                        editTimeInput.focus();
+                            editTimeInput.focus();
                     }
                     return;
                 }
@@ -1269,13 +1425,18 @@
                         nextTime.setDate(nextTime.getDate() + 1);
                     }
                     alarm.nextTriggerTime = nextTime;
+                    alarm.initialTriggerTime = now; // Reset initial trigger time for progress bar calculation
                     
                     // Update UI elements
                     if (alarm.ui.labelEl) alarm.ui.labelEl.textContent = newLabel;
                     if (alarm.ui.timeEl) alarm.ui.timeEl.textContent = formatAlarmTime(newAlarmTime);
 
                     // Re-sort and re-render alarms after editing
-                    alarms.sort((a, b) => a.time.getTime() - b.time.getTime());
+                    alarms.sort((a, b) => {
+                        const timeA = a.nextTriggerTime ? a.nextTriggerTime.getTime() : Infinity;
+                        const timeB = b.nextTriggerTime ? b.nextTriggerTime.getTime() : Infinity;
+                        return timeA - timeB;
+                    });
                     renderAlarms();
                     saveAlarms(); // Save updated alarm to local storage
                 }
@@ -1338,12 +1499,14 @@
                     e.preventDefault();
                     if (alarmSoundSelect) settings.sound = alarmSoundSelect.value;
                     if (notificationsToggle) settings.notificationsEnabled = notificationsToggle.checked;
+                    if (alarmCountdownToggle) settings.showAlarmCountdown = alarmCountdownToggle.checked; // Save new setting
                     saveSettings();
                     if (settingsModal) settingsModal.classList.add('hidden');
 
                     if (settings.notificationsEnabled && Notification.permission !== 'granted') {
                         requestNotificationPermission();
                     }
+                    updateAlarmCountdowns(); // Update countdown display immediately after saving settings
                 });
             } else { console.error("Error: settingsForm element not found."); }
 
