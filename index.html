@@ -18,7 +18,7 @@
         .timer-card {
             position: relative; /* Necessary for progress bar positioning */
             overflow: hidden; /* Hides the progress bar that goes outside the card */
-            /* Background color removed from here so the progress bar is visible */
+            background-color: #1f2937; /* Reverted: gray-800 */
         }
         .timer-card.done {
             animation: pulse-bg 1.5s infinite;
@@ -28,7 +28,7 @@
             bottom: 0;
             left: 0;
             height: 8px;
-            background-color: #3b82f6; /* Tailwind blue-500 */
+            background-color: #3b82f6; /* Reverted: blue-500 */
             z-index: 1;
             transition: width 0.25s linear;
             border-bottom-left-radius: 0.5rem;
@@ -40,39 +40,39 @@
             z-index: 1;
         }
         @keyframes pulse-bg {
-            0% { background-color: #1e40af; } /* blue-800 */
-            50% { background-color: #2563eb; } /* blue-600 */
-            100% { background-color: #1e40af; } /* blue-800 */
+            0% { background-color: #1e40af; } /* Reverted: blue-800 */
+            50% { background-color: #2563eb; } /* Reverted: blue-600 */
+            100% { background-color: #1e40af; } /* Reverted: blue-800 */
         }
         .help-icon {
             cursor: pointer;
             margin-left: 0.5rem; /* Space between label and icon */
-            color: #9ca3af; /* Gray-400 */
+            color: #9ca3af; /* Reverted: Gray-400 */
             transition: color 0.2s ease-in-out;
         }
         .help-icon:hover {
-            color: #d1d5db; /* Gray-300 */
+            color: #d1d5db; /* Reverted: Gray-300 */
         }
         .help-text-box {
-            background-color: #374151; /* Gray-700 */
+            background-color: #374151; /* Reverted: Gray-700 */
             padding: 0.75rem;
             border-radius: 0.5rem;
             margin-top: 0.5rem;
             font-size: 0.875rem; /* text-sm */
-            color: #d1d5db; /* Gray-300 */
+            color: #d1d5db; /* Reverted: Gray-300 */
             line-height: 1.4;
         }
         /* Styling for alarm toggle button */
         .alarm-toggle-btn {
-            background-color: #4b5563; /* gray-600 */
-            color: #d1d5db; /* gray-300 */
+            background-color: #4b5563; /* Reverted: gray-600 */
+            color: #d1d5db; /* Reverted: gray-300 */
         }
         .alarm-toggle-btn.active {
-            background-color: #10b981; /* green-500 */
+            background-color: #10b981; /* green-500 (kept for active state clarity) */
             color: #ffffff;
         }
         .alarm-toggle-btn:hover {
-            background-color: #6b7280; /* gray-500 */
+            background-color: #6b7280; /* Reverted: gray-500 */
         }
         .alarm-toggle-btn.active:hover {
             background-color: #059669; /* green-600 */
@@ -87,6 +87,30 @@
             justify-content: center;
             font-size: 1.5rem; /* text-2xl */
             padding: 0; /* Remove padding to make it truly circular icon-only */
+        }
+        /* Styling for the new global alarm toggle */
+        .global-alarm-toggle-btn {
+            background-color: #4b5563; /* Reverted: gray-600 */
+            color: #d1d5db; /* Reverted: Light gray */
+            width: 4rem; /* Slightly larger for prominence */
+            height: 4rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem; /* Larger icon */
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .global-alarm-toggle-btn.active {
+            background-color: #10b981; /* green-500 */
+            color: #ffffff;
+        }
+        .global-alarm-toggle-btn:hover {
+            background-color: #6b7280; /* Reverted: gray-500 */
+            transform: scale(1.1);
+        }
+        .global-alarm-toggle-btn.active:hover {
+            background-color: #059669; /* green-600 */
         }
     </style>
 </head>
@@ -124,12 +148,9 @@
                     <i class="fas fa-bell"></i>
                     <span>Lägg till nytt larm</span>
                 </button>
-                <!-- Export/Import Buttons - now smaller and icon-only -->
-                <button id="export-alarms-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-lg transition-transform transform hover:scale-110 export-import-btn" title="Exportera larm">
-                    <i class="fas fa-download"></i>
-                </button>
-                <button id="import-alarms-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-lg transition-transform transform hover:scale-110 export-import-btn" title="Importera larm">
-                    <i class="fas fa-upload"></i>
+                <!-- New Global Alarm Toggle Button - moved to the right -->
+                <button id="toggle-all-alarms-btn" class="global-alarm-toggle-btn" title="Aktivera/Inaktivera alla larm">
+                    <i class="fas fa-toggle-on"></i>
                 </button>
             </div>
             <div id="alarms-container" class="space-y-4">
@@ -184,16 +205,34 @@
                         <option value="Alarm 1">Alarm 1 (Digital)</option>
                         <option value="Alarm 2">Alarm 2 (Mjuk)</option>
                         <option value="Alarm 3">Alarm 3 (Klocka)</option>
+                        <option value="Chime">Chime (Klockspel)</option>
+                        <option value="Synth Beep">Synth Beep (Syntpip)</option>
+                        <option value="Pluck">Pluck (Kort Pling)</option>
+                        <option value="Sustained Synth">Sustained Synth (Lång)</option>
                     </select>
                 </div>
                 <div class="mb-6 flex items-center">
                     <input type="checkbox" id="notifications-toggle" class="h-5 w-5 rounded bg-gray-700 border-gray-500 text-blue-500 focus:ring-blue-500 cursor-pointer">
-                    <label for="notifications-toggle" class="ml-3 text-gray-300 cursor-pointer">Visa webbläsaviseringar</label>
+                    <label for="notifications-toggle" class="ml-3 text-gray-300 cursor-pointer">Visa webbläsaraviseringar</label>
                 </div>
                 <div id="notification-permission-status" class="text-sm text-gray-500 mb-6 hidden"></div>
 
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Larmdata</label>
+                    <div class="flex space-x-4">
+                        <button type="button" id="export-alarms-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2 w-1/2 justify-center">
+                            <i class="fas fa-download"></i>
+                            <span>Exportera</span>
+                        </button>
+                        <button type="button" id="import-alarms-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center space-x-2 w-1/2 justify-center">
+                            <i class="fas fa-upload"></i>
+                            <span>Importera</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end space-x-4">
-                     <button type="button" id="cancel-settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Stäng</button>
+                     <button type="button" id="cancel-settings-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Avbryt</button>
                      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Spara</button>
                 </div>
             </form>
@@ -223,7 +262,66 @@
         </div>
     </div>
 
-    <!-- Removed the QR code modal entirely -->
+    <!-- Edit Timer Modal -->
+    <div id="edit-timer-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-white">Redigera Timer</h2>
+            <form id="edit-timer-form">
+                <input type="hidden" id="edit-timer-id">
+                <div class="mb-4">
+                    <label for="edit-time-input" class="block text-gray-400 text-sm font-bold mb-2">
+                        Tid
+                        <i id="edit-time-input-help-icon" class="fas fa-question-circle help-icon"></i>
+                    </label>
+                    <input type="text" id="edit-time-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="t.ex. 20, 20.14, 1h 30m, 01:30:15" required>
+                    <div id="edit-time-input-help-text" class="help-text-box hidden">
+                        Ange tid i minuter (t.ex. "20" för 20 minuter). Du kan också använda:
+                        <ul>
+                            <li>Minuter och sekunder: "20.14" eller "20:14"</li>
+                            <li>Timmar, minuter, sekunder med bokstäver: "1h 30m", "45m 10s", "2h", "30s"</li>
+                            <li>Timmar, minuter, sekunder med kolon: "01:30:15" för 1 timme, 30 minuter och 15 sekunder</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label for="edit-label-input" class="block text-gray-400 text-sm font-bold mb-2">Etikett (valfritt)</label>
+                    <input type="text" id="edit-label-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="Mystery Bounty på iPoker">
+                </div>
+                <div class="mb-6 flex items-center">
+                    <input type="checkbox" id="reset-timer-checkbox" class="h-5 w-5 rounded bg-gray-700 border-gray-500 text-blue-500 focus:ring-blue-500 cursor-pointer">
+                    <label for="reset-timer-checkbox" class="ml-3 text-gray-300 cursor-pointer">Nollställ tid</label>
+                </div>
+                <div class="flex items-center justify-end space-x-4">
+                    <button type="button" id="cancel-edit-timer-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Avbryt</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Spara</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Alarm Modal -->
+    <div id="edit-alarm-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-white">Redigera Larm</h2>
+            <form id="edit-alarm-form">
+                <input type="hidden" id="edit-alarm-id">
+                <div class="mb-4">
+                    <label for="edit-alarm-time-input" class="block text-gray-400 text-sm font-bold mb-2">
+                        Larmtid (t.ex. 14:30, 08:00)
+                    </label>
+                    <input type="text" id="edit-alarm-time-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="t.ex. 14:30" required>
+                </div>
+                <div class="mb-6">
+                    <label for="edit-alarm-label-input" class="block text-gray-400 text-sm font-bold mb-2">Etikett (valfritt)</label>
+                    <input type="text" id="edit-alarm-label-input" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-600" placeholder="Rebuy 5$ iPoker">
+                </div>
+                <div class="flex items-center justify-end space-x-4">
+                    <button type="button" id="cancel-edit-alarm-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition">Avbryt</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Spara larm</button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <template id="timer-card-template">
         <div class="timer-card rounded-lg shadow-lg p-6 transition-all duration-300">
@@ -233,9 +331,14 @@
                     <p class="timer-label font-bold text-xl text-white truncate"></p>
                     <p class="timer-time font-mono text-5xl tracking-widest text-blue-400"></p>
                 </div>
-                <button class="stop-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110">
-                    <i class="fas fa-stop"></i>
-                </button>
+                <div class="flex space-x-2">
+                    <button class="edit-timer-btn bg-gray-600 hover:bg-gray-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Redigera timer">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="stop-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Stoppa timer">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </template>
@@ -248,10 +351,13 @@
                 <p class="alarm-time font-mono text-4xl tracking-widest text-green-400"></p>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="alarm-toggle-btn w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110">
+                <button class="edit-alarm-btn bg-gray-600 hover:bg-gray-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Redigera larm">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="alarm-toggle-btn w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Aktivera/Inaktivera larm">
                     <i class="fas fa-toggle-on text-green-500 text-3xl"></i>
                 </button>
-                <button class="remove-alarm-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110">
+                <button class="remove-alarm-btn bg-red-600 hover:bg-red-700 text-white font-bold w-14 h-14 rounded-full flex items-center justify-center text-lg transition-transform transform hover:scale-110" title="Ta bort larm">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -298,10 +404,33 @@
             const cancelAddAlarmBtn = document.getElementById('cancel-add-alarm-btn');
             const alarmCardTemplate = document.getElementById('alarm-card-template');
             const noAlarmsMessage = document.getElementById('no-alarms-message');
+            const toggleAllAlarmsBtn = document.getElementById('toggle-all-alarms-btn');
+
 
             // --- Export/Import Selectors ---
             const exportAlarmsBtn = document.getElementById('export-alarms-btn');
             const importAlarmsBtn = document.getElementById('import-alarms-btn');
+
+            // --- Edit Timer Selectors ---
+            const editTimerModal = document.getElementById('edit-timer-modal');
+            const editTimerForm = document.getElementById('edit-timer-form');
+            const editTimerIdInput = document.getElementById('edit-timer-id');
+            const editTimeInput = document.getElementById('edit-time-input');
+            const editLabelInput = document.getElementById('edit-label-input');
+            const cancelEditTimerBtn = document.getElementById('cancel-edit-timer-btn');
+            const editTimeInputHelpIcon = document.getElementById('edit-time-input-help-icon');
+            const editTimeInputHelpText = document.getElementById('edit-time-input-help-text');
+            const resetTimerCheckbox = document.getElementById('reset-timer-checkbox'); // New selector
+            let currentEditingTimerId = null;
+
+            // --- Edit Alarm Selectors ---
+            const editAlarmModal = document.getElementById('edit-alarm-modal');
+            const editAlarmForm = document.getElementById('edit-alarm-form');
+            const editAlarmIdInput = document.getElementById('edit-alarm-id');
+            const editAlarmTimeInput = document.getElementById('edit-alarm-time-input');
+            const editAlarmLabelInput = document.getElementById('edit-alarm-label-input');
+            const cancelEditAlarmBtn = document.getElementById('cancel-edit-alarm-btn');
+            let currentEditingAlarmId = null;
 
 
             // --- State ---
@@ -317,7 +446,28 @@
             const sounds = {
                 'Alarm 1': () => new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 } }).toDestination(),
                 'Alarm 2': () => new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.1, decay: 0.5, sustain: 0.1, release: 1 } }).toDestination(),
-                'Alarm 3': () => new Tone.MembraneSynth().toDestination()
+                'Alarm 3': () => new Tone.MembraneSynth().toDestination(),
+                'Chime': () => new Tone.MetalSynth({
+                    frequency: 200,
+                    envelope: { attack: 0.001, decay: 1.4, sustain: 0.1, release: 0.2 },
+                    harmonicity: 3.1,
+                    modulationIndex: 32,
+                    resonance: 4000,
+                    octaves: 1.5
+                }).toDestination(),
+                'Synth Beep': () => new Tone.Synth({
+                    oscillator: { type: 'sawtooth' },
+                    envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.1 }
+                }).toDestination(),
+                'Pluck': () => new Tone.PluckSynth({
+                    attackNoise: 1,
+                    dampening: 4000,
+                    resonance: 0.9
+                }).toDestination(),
+                'Sustained Synth': () => new Tone.Synth({
+                    oscillator: { type: 'triangle' },
+                    envelope: { attack: 0.5, decay: 0.1, sustain: 0.8, release: 3 } // Longer release for sustain
+                }).toDestination()
             };
 
             // --- Logic ---
@@ -466,12 +616,14 @@
                 const labelEl = card.querySelector('.timer-label');
                 const timeEl = card.querySelector('.timer-time');
                 const stopBtn = card.querySelector('.stop-btn');
+                const editBtn = card.querySelector('.edit-timer-btn'); // Get edit button
                 const progressEl = card.querySelector('.timer-progress'); // Get the progress element
                 
                 const timerLabel = label || `Timer #${Math.floor(Math.random() * 1000)}`;
                 labelEl.textContent = timerLabel;
                 timeEl.textContent = formatTime(totalSeconds);
                 stopBtn.addEventListener('click', () => stopTimer(id));
+                editBtn.addEventListener('click', () => editTimer(id)); // Add event listener for edit
                 
                 // Set the progress bar width to 100% initially
                 progressEl.style.width = '100%'; 
@@ -483,9 +635,9 @@
                     id,
                     endTime,
                     label: timerLabel,
-                    totalSeconds,
+                    totalSeconds, // Store initial totalSeconds
                     finished: false,
-                    ui: { card, labelEl, timeEl, stopBtn, progressEl } // Save progressEl
+                    ui: { card, labelEl, timeEl, stopBtn, editBtn, progressEl } // Save editBtn
                 };
 
                 timers.push(newTimer);
@@ -537,7 +689,16 @@
                     synth.triggerAttackRelease('C5', '8n', Tone.now() + 0.2);
                 } else if (settings.sound === 'Alarm 2') {
                     synth.triggerAttackRelease('E4', '4n');
-                } else { // Alarm 3
+                } else if (settings.sound === 'Chime') {
+                    synth.triggerAttackRelease('G4', '2n');
+                } else if (settings.sound === 'Synth Beep') {
+                    synth.triggerAttackRelease('C5', '16n');
+                } else if (settings.sound === 'Pluck') {
+                    synth.triggerAttackRelease('C4', '8n');
+                } else if (settings.sound === 'Sustained Synth') {
+                    synth.triggerAttackRelease('C4', '4s'); // Play C4 for 4 seconds
+                }
+                else { // Default to Alarm 3
                     synth.triggerAttackRelease('C2', '8n');
                 }
             };
@@ -610,12 +771,24 @@
                             nextTriggerTime: alarmData.nextTriggerTime ? new Date(alarmData.nextTriggerTime) : null,
                             ui: {} // UI elements will be re-created
                         };
-                        createAlarmCard(alarm); // Recreate UI for each loaded alarm
-                        return alarm;
+                        return alarm; // Return the alarm object for sorting
                     });
+                    // Sort alarms after loading
+                    alarms.sort((a, b) => a.time.getTime() - b.time.getTime());
+                    renderAlarms(); // Render all alarms after sorting
                     updateNoAlarmsMessage();
                     startAlarmCheckInterval();
+                    updateToggleAllAlarmsButton(); // Initialize global toggle state
                 }
+            };
+
+            const renderAlarms = () => {
+                // Clear existing alarm cards from the container
+                alarmsContainer.innerHTML = '';
+                // Append sorted alarms
+                alarms.forEach(alarm => {
+                    createAlarmCard(alarm);
+                });
             };
 
             const parseAlarmTimeInput = (str) => {
@@ -659,6 +832,7 @@
                 const timeEl = card.querySelector('.alarm-time');
                 const toggleBtn = card.querySelector('.alarm-toggle-btn');
                 const removeBtn = card.querySelector('.remove-alarm-btn');
+                const editBtn = card.querySelector('.edit-alarm-btn'); // Get edit button
 
                 labelEl.textContent = alarm.label;
                 timeEl.textContent = formatAlarmTime(alarm.time);
@@ -671,15 +845,24 @@
 
                 // Attach event listeners
                 if (toggleBtn) {
-                    toggleBtn.addEventListener('click', () => toggleAlarm(alarm.id));
+                    toggleBtn.addEventListener('click', () => {
+                        toggleAlarm(alarm.id);
+                        updateToggleAllAlarmsButton(); // Update global toggle after individual alarm change
+                    });
                 }
                 if (removeBtn) {
-                    removeBtn.addEventListener('click', () => removeAlarm(alarm.id));
+                    removeBtn.addEventListener('click', () => {
+                        removeAlarm(alarm.id);
+                        updateToggleAllAlarmsButton(); // Update global toggle after individual alarm change
+                    });
+                }
+                if (editBtn) {
+                    editBtn.addEventListener('click', () => editAlarm(alarm.id)); // Add event listener for edit
                 }
 
                 alarmsContainer.appendChild(card);
 
-                alarm.ui = { card, labelEl, timeEl, toggleBtn, removeBtn };
+                alarm.ui = { card, labelEl, timeEl, toggleBtn, removeBtn, editBtn }; // Save editBtn
             };
 
             const addNewAlarm = (alarmTime, label) => {
@@ -692,10 +875,12 @@
                     nextTriggerTime: alarmTime // Initial trigger time
                 };
                 alarms.push(newAlarm);
-                createAlarmCard(newAlarm);
+                alarms.sort((a, b) => a.time.getTime() - b.time.getTime()); // Sort after adding
+                renderAlarms(); // Re-render to reflect new sorted order
                 saveAlarms();
                 updateNoAlarmsMessage();
                 startAlarmCheckInterval();
+                updateToggleAllAlarmsButton(); // Update global toggle after new alarm
             };
 
             const toggleAlarm = (id) => {
@@ -792,7 +977,7 @@
                             
                             // Optional: Briefly highlight the alarm card when it triggers
                             if (alarm.ui && alarm.ui.card) { // Check before accessing UI
-                                alarm.ui.card.classList.add('border-green-500', 'border-4');
+                                alarm.ui.card.classList.add('border-green-500', 'border-4'); /* Reverted border color to green */
                                 setTimeout(() => {
                                     if (alarm.ui && alarm.ui.card) { // Check again before removing
                                         alarm.ui.card.classList.remove('border-green-500', 'border-4');
@@ -803,6 +988,60 @@
                     }
                 });
             };
+
+            // --- Global Alarm Toggle Logic ---
+            const toggleAllAlarms = () => {
+                const anyActive = alarms.some(alarm => alarm.active);
+                const newState = !anyActive; // If any are active, turn them all off. Otherwise, turn them all on.
+
+                alarms.forEach(alarm => {
+                    alarm.active = newState;
+                    if (alarm.ui && alarm.ui.toggleBtn) {
+                        updateAlarmToggleButton(alarm.ui.toggleBtn, newState);
+                    }
+                    if (alarm.ui && alarm.ui.card) {
+                        if (newState) {
+                            alarm.ui.card.classList.remove('opacity-50');
+                            // Recalculate next trigger time if activated
+                            const now = new Date();
+                            let nextTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), alarm.time.getHours(), alarm.time.getMinutes(), alarm.time.getSeconds());
+                            if (nextTime.getTime() <= now.getTime()) {
+                                nextTime.setDate(nextTime.getDate() + 1);
+                            }
+                            alarm.nextTriggerTime = nextTime;
+                        } else {
+                            alarm.ui.card.classList.add('opacity-50');
+                            alarm.nextTriggerTime = null;
+                        }
+                    }
+                });
+                saveAlarms();
+                updateToggleAllAlarmsButton(); // Update the global toggle button's appearance
+                if (newState && alarms.length > 0) { // Only start interval if there are alarms and they are being activated
+                    startAlarmCheckInterval();
+                } else if (!newState) { // Stop if all are turned off
+                    stopAlarmCheckInterval();
+                }
+            };
+
+            const updateToggleAllAlarmsButton = () => {
+                if (!toggleAllAlarmsBtn) return;
+
+                // Determine if any alarm is active
+                const anyActive = alarms.some(alarm => alarm.active);
+
+                // Update button appearance
+                toggleAllAlarmsBtn.classList.remove('active');
+                toggleAllAlarmsBtn.querySelector('i').classList.remove('fa-toggle-on', 'fa-toggle-off');
+
+                if (anyActive) {
+                    toggleAllAlarmsBtn.classList.add('active');
+                    toggleAllAlarmsBtn.querySelector('i').classList.add('fa-toggle-on');
+                } else {
+                    toggleAllAlarmsBtn.querySelector('i').classList.add('fa-toggle-off');
+                }
+            };
+
 
             // --- Export/Import Functions ---
             const exportData = () => {
@@ -873,8 +1112,9 @@
                                         nextTriggerTime: nextTriggerTime
                                     };
                                     alarms.push(newAlarm); // Add to the global alarms array
-                                    createAlarmCard(newAlarm); // Create UI for this exact object
                                 });
+                                alarms.sort((a, b) => a.time.getTime() - b.time.getTime()); // Sort after importing all
+                                renderAlarms(); // Re-render after sorting
                             }
 
                             // Import settings
@@ -887,6 +1127,7 @@
                             // Do NOT touch existing timers
                             updateNoAlarmsMessage(); // This should now correctly hide/show
                             startAlarmCheckInterval();
+                            updateToggleAllAlarmsButton(); // Update global toggle after import
                             console.log('Larmdata importerad framgångsrikt!');
                         } catch (error) {
                             console.error('Fel vid import av larmdata:', error);
@@ -898,6 +1139,149 @@
                 document.body.appendChild(input);
                 input.click(); // Open file dialog
                 document.body.removeChild(input); // Clean up the input element
+            };
+
+            // --- Edit Timer Functions ---
+            const editTimer = (id) => {
+                const timer = timers.find(t => t.id === id);
+                if (timer) {
+                    currentEditingTimerId = id;
+                    if (editTimerIdInput) editTimerIdInput.value = id;
+                    // Display current remaining time in the input, not totalSeconds, for better UX
+                    const currentRemainingSeconds = Math.round((timer.endTime - Date.now()) / 1000);
+                    if (editTimeInput) editTimeInput.value = formatTime(currentRemainingSeconds);
+                    if (editLabelInput) editLabelInput.value = timer.label;
+                    if (resetTimerCheckbox) resetTimerCheckbox.checked = false; // Default to not resetting
+                    if (editTimerModal) editTimerModal.classList.remove('hidden');
+                    if (editTimeInput) editTimeInput.focus();
+                }
+            };
+
+            const saveEditedTimer = (e) => {
+                e.preventDefault();
+                const id = parseInt(editTimerIdInput.value);
+                const newTotalSeconds = parseTimeInput(editTimeInput.value);
+                const newLabel = editLabelInput.value;
+                const resetTimer = resetTimerCheckbox.checked; // Get checkbox state
+
+                if (newTotalSeconds === null) {
+                    console.error('Ogiltigt tidsformat för timer. Försök med t.ex. "20", "20.14", "1h 30m".');
+                    if (editTimeInput) {
+                        editTimeInput.classList.add('border-red-500', 'ring-red-500');
+                        setTimeout(() => {
+                            if (editTimeInput) editTimeInput.classList.remove('border-red-500', 'ring-red-500');
+                        }, 2000);
+                        editTimeInput.focus();
+                    }
+                    return;
+                }
+
+                const timerIndex = timers.findIndex(t => t.id === id);
+                if (timerIndex > -1) {
+                    const timer = timers[timerIndex];
+                    const oldTotalSeconds = timer.totalSeconds; // Store original total for proportional calculation
+
+                    timer.label = newLabel; // Always update label
+                    if (timer.ui.labelEl) timer.ui.labelEl.textContent = newLabel; // FIX: Update UI label
+
+                    if (resetTimer) {
+                        // Reset the timer completely
+                        timer.totalSeconds = newTotalSeconds; // Update total duration
+                        timer.endTime = Date.now() + newTotalSeconds * 1000;
+                        timer.finished = false; // Ensure it's not marked as finished
+                        if (timer.ui.progressEl) timer.ui.progressEl.style.width = '100%'; // Reset progress bar visual
+                        if (timer.ui.stopBtn) { // Reset stop button if it was 'done'
+                            timer.ui.stopBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                            timer.ui.stopBtn.classList.remove('bg-green-600', 'cursor-not-allowed');
+                            timer.ui.stopBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                            timer.ui.stopBtn.disabled = false;
+                        }
+                        if (timer.ui.card) timer.ui.card.classList.remove('done'); // Remove done class
+                    } else {
+                        // Continue countdown, adjust remaining time proportionally
+                        const currentRemainingSeconds = Math.round((timer.endTime - Date.now()) / 1000);
+
+                        let newRemainingSeconds;
+                        if (oldTotalSeconds > 0) {
+                            const ratio = currentRemainingSeconds / oldTotalSeconds;
+                            newRemainingSeconds = newTotalSeconds * ratio;
+                        } else {
+                            // If old total was 0 (shouldn't happen for active timers), treat as reset
+                            newRemainingSeconds = newTotalSeconds;
+                        }
+                        
+                        // Ensure newRemainingSeconds doesn't go below zero or exceed newTotalSeconds
+                        newRemainingSeconds = Math.max(0, Math.min(newRemainingSeconds, newTotalSeconds));
+
+                        timer.totalSeconds = newTotalSeconds; // Update total duration
+                        timer.endTime = Date.now() + newRemainingSeconds * 1000; // Set new end time
+                        // Progress bar will update naturally in updateAllTimers
+                    }
+
+                    // Update UI time display immediately
+                    if (timer.ui.timeEl) timer.ui.timeEl.textContent = formatTime(Math.round((timer.endTime - Date.now()) / 1000));
+                }
+
+                if (editTimerModal) editTimerModal.classList.add('hidden');
+                currentEditingTimerId = null;
+            };
+
+            // --- Edit Alarm Functions ---
+            const editAlarm = (id) => {
+                const alarm = alarms.find(a => a.id === id);
+                if (alarm) {
+                    currentEditingAlarmId = id;
+                    if (editAlarmIdInput) editAlarmIdInput.value = id;
+                    if (editAlarmTimeInput) editAlarmTimeInput.value = formatAlarmTime(alarm.time);
+                    if (editAlarmLabelInput) editAlarmLabelInput.value = alarm.label;
+                    if (editAlarmModal) editAlarmModal.classList.remove('hidden');
+                    if (editAlarmTimeInput) editAlarmTimeInput.focus();
+                }
+            };
+
+            const saveEditedAlarm = (e) => {
+                e.preventDefault();
+                const id = parseInt(editAlarmIdInput.value);
+                const newAlarmTime = parseAlarmTimeInput(editAlarmTimeInput.value);
+                const newLabel = editAlarmLabelInput.value;
+
+                if (newAlarmTime === null) {
+                    console.error('Ogiltigt tidsformat för larm. Använd format som HH:MM (t.ex. 14:30).');
+                    if (editAlarmTimeInput) {
+                        editAlarmTimeInput.classList.add('border-red-500', 'ring-red-500');
+                        setTimeout(() => {
+                            if (editAlarmTimeInput) editAlarmTimeInput.classList.remove('border-red-500', 'ring-red-500');
+                        }, 2000);
+                        editAlarmTimeInput.focus();
+                    }
+                    return;
+                }
+
+                const alarmIndex = alarms.findIndex(a => a.id === id);
+                if (alarmIndex > -1) {
+                    const alarm = alarms[alarmIndex];
+                    alarm.time = newAlarmTime; // Update the base alarm time
+                    alarm.label = newLabel;
+                    // Recalculate next trigger time based on new time
+                    const now = new Date();
+                    let nextTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), alarm.time.getHours(), alarm.time.getMinutes(), alarm.time.getSeconds());
+                    if (nextTime.getTime() <= now.getTime()) {
+                        nextTime.setDate(nextTime.getDate() + 1);
+                    }
+                    alarm.nextTriggerTime = nextTime;
+                    
+                    // Update UI elements
+                    if (alarm.ui.labelEl) alarm.ui.labelEl.textContent = newLabel;
+                    if (alarm.ui.timeEl) alarm.ui.timeEl.textContent = formatAlarmTime(newAlarmTime);
+
+                    // Re-sort and re-render alarms after editing
+                    alarms.sort((a, b) => a.time.getTime() - b.time.getTime());
+                    renderAlarms();
+                    saveAlarms(); // Save updated alarm to local storage
+                }
+
+                if (editAlarmModal) editAlarmModal.classList.add('hidden');
+                currentEditingAlarmId = null;
             };
 
 
@@ -1023,6 +1407,40 @@
             if (importAlarmsBtn) {
                 importAlarmsBtn.addEventListener('click', importData);
             } else { console.error("Error: importAlarmsBtn element not found."); }
+
+            // --- Global Alarm Toggle Event Listener ---
+            if (toggleAllAlarmsBtn) {
+                toggleAllAlarmsBtn.addEventListener('click', toggleAllAlarms);
+            } else { console.error("Error: toggleAllAlarmsBtn element not found."); }
+
+            // --- Edit Timer Event Listeners ---
+            if (cancelEditTimerBtn) {
+                cancelEditTimerBtn.addEventListener('click', () => {
+                    if (editTimerModal) editTimerModal.classList.add('hidden');
+                    currentEditingTimerId = null;
+                });
+            }
+            if (editTimerForm) {
+                editTimerForm.addEventListener('submit', saveEditedTimer);
+            }
+            if (editTimeInputHelpIcon) {
+                editTimeInputHelpIcon.addEventListener('click', () => {
+                    if (editTimeInputHelpText) {
+                        editTimeInputHelpText.classList.toggle('hidden');
+                    }
+                });
+            }
+
+            // --- Edit Alarm Event Listeners ---
+            if (cancelEditAlarmBtn) {
+                cancelEditAlarmBtn.addEventListener('click', () => {
+                    if (editAlarmModal) editAlarmModal.classList.add('hidden');
+                    currentEditingAlarmId = null;
+                });
+            }
+            if (editAlarmForm) {
+                editAlarmForm.addEventListener('submit', saveEditedAlarm);
+            }
 
 
             // --- Init ---
